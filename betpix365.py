@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from acessos import *
 
 
-class betpix365:
+class c_betpix365:
     def __init__(self, conexao):
         self.id_site = 1
         self.all_campeonatos = {}
@@ -60,9 +60,11 @@ class betpix365:
                                                                                         'camp': {}}
                     for camp in pais['sns']:
                         if not camp['lName'] in _campeonatos:
-                            sql = f'INSERT IGNORE INTO ind_camp (id_ind_pais, camp_name) VALUES ({_paises[pais["cN"]]},"{camp["lName"]}");'
+                            sql = f'INSERT IGNORE INTO ind_camp (id_ind_sport, id_ind_pais, camp_name) VALUES ({_sports[esporte["stN"]]},{_paises[pais["cN"]]},"{camp["seaN"]}");'
                             self.conexao.bd(sql, fetch=False)
-                            #paises[pais['cN']] = self.conexao.bd(f'SELECT id FROM ind_camp WHERE camp_name = "{camp["Name"]}" and id_ind_pais = {paises[pais["cN"]]};', fetch=True)[0][0]
+                            _campeonatos[camp["seaN"]] = self.conexao.bd(f'SELECT id FROM ind_camp WHERE camp_name = "{camp["seaN"]}" and id_ind_pais = {_paises[pais["cN"]]} and id_ind_sport = {_sports[esporte["stN"]]};', fetch=True)[0][0]
+                            sqlxx = f'INSERT INTO sit_camp (id_site, id_site_camp, site_camp_name, id_ind_camp) VALUES ({self.id_site},"{camp["sId"]}","{camp["seaN"]}",{_campeonatos[camp["seaN"]]}) ON DUPLICATE KEY UPDATE site_camp_name="{camp["seaN"]}";'
+                            self.conexao.bd(sqlxx, fetch=False)
 
                         # if not [pais['cN']] in paises:
                         #     paises.append(pais['cN'])

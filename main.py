@@ -1,11 +1,14 @@
-from betpix365 import betpix365
+from betpix365 import c_betpix365
+from sportsbet import c_sportsbet
 import time, json
 from bd import class_bd
 
 conexao = class_bd()
 
-v_betpix365 = betpix365(conexao)
+v_betpix365 = c_betpix365(conexao)
+v_sportsbet = c_sportsbet(conexao)
 
+v_sportsbet.get_all_campeonatos()
 #testexxx = v_betpix365.teste()
 start_time = time.time()
 down=True
