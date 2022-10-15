@@ -19,7 +19,7 @@ class class_bd:
                 if fetch:
                     records = cursor.fetchall()
                 else:
-                    records = None
+                    records = cursor.lastrowid
                 connection.commit()
                 print(cursor.rowcount, "Rows afetadas in query")
                 cursor.close()
