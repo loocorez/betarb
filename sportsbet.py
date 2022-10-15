@@ -7,7 +7,7 @@ class c_sportsbet:
     def __init__(self, conexao):
         self.id_site = 2
         self.conexao = conexao
-        self.cookies = '_ga_SEKFV66B0S=GS1.1.1665844394.1.1.1665848253.53.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.2.1665848252.1665846110.21b0e5d2-d867-4bde-b8c4-68dc9de23209; _ga=GA1.2.1290975728.1665845236; GW_CLIENT_ID=070377c1cc9793110aa675f3b7b80b15f4c251f081e80ccf94c5a59d755900ed; tryMetamaskHide=true; _gid=GA1.2.336080138.1665845260; fs_uid=#BN5B8#4935986190192640:5498079595433984:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1665853302430,"i_l":1}; __cf_bm=bs9fJ7foHSVuIct5E6YvKxQx2XvvjUFhpdyvf3rILEA-1665849391-0-AWUi3aw8TmqsmdAUleWFf4enkcZwrkBiX0/XAGhl/5X0C2cd0rAM75vR/VvvIwKLwXWAxYfmljXAbgKD/aaZdHPNv/dz/WTEpYyI7qDoPyr2cIO9qFZbvpokn8XXnDw1QYGFfI9kPWmxiReXkDrc8SU/pBPSTRTiK3QZFob8lb7J; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; MKTSRC={"t":1665847944700,"d":{"src":"direct","mdm":"direct","cmp":"","kwd":"","cnt":"","glc":"","msc":""}}; _sp_srt_ses.b17c=*; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI='
+        self.cookies = '_ga_SEKFV66B0S=GS1.1.1665844394.1.1.1665849398.58.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.2.1665849403.1665846110.21b0e5d2-d867-4bde-b8c4-68dc9de23209; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; _gid=GA1.2.336080138.1665845260; fs_uid=#BN5B8#4935986190192640:5498079595433984:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1665853302430,"i_l":1}; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=ePgheGZhao__qyAp6kskGwBClsgm1Dx8KTAKto.zCF4-1665853899-0-AXtuZZReE9x21qftHBWSK8X2/uqstGRh0S35oxy7GAi7PKHbOBi5o6KRnZ57jwAy3nwmK+tyMucsT012tbpRRow='
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0'
         self.sports = {}
         self.paises = {}
@@ -25,7 +25,7 @@ class c_sportsbet:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
             'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Accept-Encoding': 'gzip, deflate, br',
+            #'Accept-Encoding': 'gzip, deflate, br',
             #'Referer': 'https://sportsbet.io/pt/sports',
             'Cookie': self.cookies,
             'Upgrade-Insecure-Requests': '1',
