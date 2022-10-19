@@ -1,13 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
 from acessos import *
 from bs4 import BeautifulSoup
-import codecs, html, json
+import codecs, html, json, time
 import cloudscraper
+from cookie import *
 class c_sportsbet:
     def __init__(self, conexao):
+        self.sessao = requests.session()
         self.id_site = 2
-        self.conexao = conexao
-        self.cookies = '_ga_SEKFV66B0S=GS1.1.1665844394.1.1.1665849398.58.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.2.1665849403.1665846110.21b0e5d2-d867-4bde-b8c4-68dc9de23209; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; _gid=GA1.2.336080138.1665845260; fs_uid=#BN5B8#4935986190192640:5498079595433984:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1665853302430,"i_l":1}; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=ePgheGZhao__qyAp6kskGwBClsgm1Dx8KTAKto.zCF4-1665853899-0-AXtuZZReE9x21qftHBWSK8X2/uqstGRh0S35oxy7GAi7PKHbOBi5o6KRnZ57jwAy3nwmK+tyMucsT012tbpRRow='
+        self.mysql_conn = conexao
+        self.cookies = '__cfwaitingroom=Chh4SUdKOEIvL3A2dEpuUGZLWWpxU2RBPT0SkAJJQlBhbEJIUEFzMjNDZlVKZlQ5czZJd2tvVlM3Wk85bEpNbDloS2VPSnNkQXBKa2Fkd2Vud0Z0NTAyandtWHZlVXl1Z1Y1ODF2SXRPRW9Sd0Q2UXU5Wk9hMEVnNXZpU3dtSWJIMHBRcWgrb0NMN08xRXlVMzBRcmVlMlVMV0Fnb0YwSmNBS2l4TVpZK2d0OVRYTTg2QXI5MGtud1lEejJJR2hOa3NHN29PbFJuK1NxckZHak1kQmNvc1JRZ3FoZzZOTThySGllZElWQ2RkWHRJaUh3Y2YvOTF1R3l2TkdoNitOL1dkRVNNei9BNVAyUmF3UWtnMFJmK3dMR3ZuK3J6dmtOSURmblNIQWc0emtKNA%3D%3D; _ga_SEKFV66B0S=GS1.1.1666120922.5.0.1666120922.60.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.5.1666118246.1666115462.6cd15c9f-79ea-4ace-b908-954a36708154; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; fs_uid=#BN5B8#4935986190192640:4955098419007488:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1666721925579,"i_l":3}; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; _gid=GA1.2.1016127202.1666115464; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=wA2ut61F1buOGqB6yH6n2RYBpR.d2E3lwhWA0bMudt8-1666120924-0-Adz1Qtsa2YQlbKzZ9U8jOCApkeh5TdgvEiZnB+qrby1PykOxoSc0AgSbeOUljC0ebquimOUToTCiuBtjtPDDDPY='
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0'
         self.sports = {}
         self.paises = {}
@@ -22,7 +24,7 @@ class c_sportsbet:
         url = 'https://sportsbet.io/pt/sports'
         headers = {
             'Host': 'sportsbet.io',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
+            'User-Agent': self.user_agent,
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
             'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
             #'Accept-Encoding': 'gzip, deflate, br',
@@ -32,9 +34,31 @@ class c_sportsbet:
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1'
+            'Sec-Fetch-User': '?1',
         }
-        html_text = get_url_str(url=url, headers=headers).text
+        cookies = ler_cookies()
+        time1 = str(int(time.time()))
+        time2 = str(int(time.time())+1)
+        cookie_new = '_fs_tab_id=c098b7e0d6e030;__cfwaitingroom=Chh4SUdKOEIvL3A2dEpuUGZLWWpxU2RBPT0SkAJJQlBhbEJIUEFzMjNDZlVKZlQ5czZJd2tvVlM3Wk85bEpNbDloS2VPSnNkQXBKa2Fkd2Vud0Z0NTAyandtWHZlVXl1Z1Y1ODF2SXRPRW9Sd0Q2UXU5Wk9hMEVnNXZpU3dtSWJIMHBRcWgrb0NMN08xRXlVMzBRcmVlMlVMV0Fnb0YwSmNBS2l4TVpZK2d0OVRYTTg2QXI5MGtud1lEejJJR2hOa3NHN29PbFJuK1NxckZHak1kQmNvc1JRZ3FoZzZOTThySGllZElWQ2RkWHRJaUh3Y2YvOTF1R3l2TkdoNitOL1dkRVNNei9BNVAyUmF3UWtnMFJmK3dMR3ZuK3J6dmtOSURmblNIQWc0emtKNA%3D%3D; _ga_SEKFV66B0S=GS1.1.1666120922.5.0.' + time2  + '.60.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.6.' + time1 + '.1666118246.f8b561b9-65df-4985-9a9b-b4b4950cf68d; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; fs_uid=#BN5B8#4935986190192640:4955098419007488:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1666721925579,"i_l":3}; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; _gid=GA1.2.1016127202.1666115464; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=wA2ut61F1buOGqB6yH6n2RYBpR.d2E3lwhWA0bMudt8-1666120924-0-Adz1Qtsa2YQlbKzZ9U8jOCApkeh5TdgvEiZnB+qrby1PykOxoSc0AgSbeOUljC0ebquimOUToTCiuBtjtPDDDPY='
+        cookie_new2= '_wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.6.'+ time1+'.1666118246.f8b561b9-65df-4985-9a9b-b4b4950cf68d; tryMetamaskHide=true; fs_uid=#BN5B8#4935986190192640:6491650097909760:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1666721925579,"i_l":3}; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; refAff=affid=148&cxid=148_390538&source=834dde61122; _ga=GA1.2.9566590343.5008065082; _gid=GA1.2.1327268174.1666120956; _ga_SEKFV66B0S=GS1.1.1666120922.5.1.' + time2 + '.59.0.0; GW_CLIENT_ID=40044fa102acb6931773f9360c70e283567eaf87ea7c4b89903a7a877fa08a4a; __cf_bm=Ln.Y1No9IXJFQpjhDKUY.WlPuJEJZtSgZ84fuOw6kvE-1666128101-0-AavS/k5pOAmxrYDj8esgJL23FzifJ7GjEgOyhW+k4fZCCbBQAMG0YpC/Kxj4hg3MHaI+ohbLrYinCwyjso54zGU=; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI='
+        cookie_new3 = 'experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; __cf_bm=9sbw_fRdetRON3Wjow7ly1g.J8IFlnthW9ptWMbQ8ho-1666128904-0-ATMuKJ5hzL8s134AhK3K/DPVoaRAPYB2p/hUJ+J2/ME3NDCw4rnO67waTOWgsQuNgRrMpCVfvXOfTMSn+tIG165CKjfL0SlznbiiUriwqPSXQsyuZuyKm3mCFI8l1g63uKoAhjnAb1npnOwDdPqx6otS00EA2w2Mj9csG79ylN3I; MKTSRC={"t":1666128900100,"d":{"src":"direct","mdm":"direct","cmp":"","kwd":"","cnt":"","glc":"","msc":""}}; _dd_s=rum=1&id=dc45aae9-96bb-46fe-8179-b46d2bf10706&created=1666128900587&expire=1666129925735&logs=1; _wingify_pc_uuid=c294ceb68ad8497b8289e1ef8b2d0b0e; __tid=uid-7391421832.7179433751; _ga_SEKFV66B0S=GS1.1.1666128903.1.1.1666128926.37.0.0; _ga=GA1.2.1039401276.1666128903; _sp_srt_ses.b17c=*; _sp_srt_id.b17c=42aeeb8c-d7a9-4532-91a8-937e2a30feeb.1666128903.1.1666128925.1666128903.f932475b-84a3-4a2c-85e9-e27a4bf8f5d8; GW_CLIENT_ID=90a8bb8c57052b0cd7bd6b450c43fc5cd2f8ee09d324114126c240ba5e204dc5; _gid=GA1.2.581277808.1666128908; adformfrpid=381027116410573887; fs_uid=#BN5B8#6367371768336384:5049902054215680:::#/1697664908; fs_cid=1.0; wingify_donot_track_actions=0; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRmMWMwMTY0MGNkYjZlMWZjNDM1ZWY='
+        headersX = {'Host': 'sportsbet.io',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+                    'Cookie': cookie_new3,
+                    'Upgrade-Insecure-Requests': '1',
+                    'Sec-Fetch-Dest': 'document',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'Sec-Fetch-Site': 'none',
+                    'Sec-Fetch-User': '?1'}
+        urlf = "https://sportsbet.io/pt/sports"
+        tester = requests.get(url=urlf, headers=headersX)
+
+        urlxx = "http://2captcha.com/in.php?key=0a8b7adcaded3fb07836cb56a47b111f&method=userrecaptcha&version=v3&action=verify&min_score=0.3&googlekey=6LeljvsfAAAAACR46bzAIy6Cukry12i-LpJe7U_H&pageurl=https://sportsbet.io/pt/sports"
+        tester = self.sessao.get(url=urlxx, allow_redirects=True)
+
+        html_text = get_url_str(self, url=url, headers=headers).text
         soup = BeautifulSoup(html_text, 'html.parser')
         headers = {
             'User-Agent': self.user_agent,
@@ -53,7 +77,7 @@ class c_sportsbet:
                               "timePeriod": "ANY", "leagueTournaments": "ANY", "featuredLeagueTournaments": "ANY",
                               "tournamentEventCount": "ANY"},
                 "query": "query SportEventListQuery($language: String!, $slug: String!, $timePeriod: SportsbetNewGraphqlSportLeagues!, $leagueTournaments: SportsbetNewGraphqlLeagueTournaments!, $featuredLeagueTournaments: SportsbetNewGraphqlFeaturedLeagueTournaments!, $tournamentEventCount: SportsbetNewGraphqlTournamentEventCount!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      featuredLeague {\n        id\n        name(language: $language)\n        tournaments(childType: $featuredLeagueTournaments) {\n          id\n          slug\n          name(language: $language)\n          eventCount(childType: $tournamentEventCount)\n          league {\n            id\n            slug\n            name(language: $language)\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      name(language: $language)\n      leagues(childType: $timePeriod) {\n        id\n        name(language: $language)\n        slug\n        tournaments(childType: $leagueTournaments) {\n          id\n          slug\n          name(language: $language)\n          eventCount(childType: $tournamentEventCount)\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
-        response_json = post_url_str(url=url, headers=headers, data=data)
+        response_json = post_url_str(self, url=url, headers=headers, data=data)
 
         for link in soup.find_all('script'):
             if 'window.APOLLO_STATE=' in link.text:
