@@ -3,7 +3,7 @@ import time
 import undetected_chromedriver.v2 as uc
 from time import sleep
 from random import randint
-
+import asyncio
 
 # driver = uc.Chrome()
 # driver.get('https://www.sportsbet.io')
@@ -11,29 +11,123 @@ from random import randint
 
 import json
 from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 
+
+def get_async_data(route, request):
+    method = 'POST'
+    postData = {"operationName":"SportQuery","variables":{"language":"pt","site":"sportsbet","slug":"soccer"},"query":"query SportQuery($language: String!, $slug: String!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      name(language: $language)\n      enName: name(language: \"en\")\n      iconCode\n      liveEventCount: eventCount(childType: LIVE)\n      todayEventCount: eventCount(childType: TODAY)\n      futureEventCount: eventCount(childType: ANY)\n      leagues(childType: ANY) {\n        id\n        tournaments(childType: ANY) {\n          id\n          events(childType: ANY, first: 1) {\n            id\n            information {\n              provider_prefix\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+    responseX = route.continue_(method, postData)
+    print(responseX)
+    xxx = 0
+
+
+
+async def main():
+    launchOptionsX = proxy = {
+        "server": '127.0.0.1:12960'  # ,
+        # 'username': 'My_user',
+        # "password": 'My_password',
+    }
+    async with async_playwright() as p:
+        # browser = await p.firefox.launch(
+        #     headless=False,
+        #     devtools=True,
+        #     proxy=launchOptionsX,
+        # )
+        url = "https://sportsbet.io"
+        path = '/pt/sports/soccer/inplay'
+        # url = "https://bet365.com"
+        # path = '/'
+
+        browser = await p.firefox.launch(headless=False, proxy=launchOptionsX)
+        context = await browser.new_context(base_url=url, ignore_https_errors=True)
+
+        page = await context.new_page()
+        await page.set_viewport_size({'width': 1920, 'height': 870})
+        await page.goto(path, wait_until="domcontentloaded")
+        # wait_for_selector
+        await asyncio.sleep(10)
+        locatorxx = page.locator('tag=footer >> className="FooterContainer-sc-18uurvk-0 bUOomo"').first
+        # page.on("response", lambda response: print("<<", response.headers, response.url))
+        await page.screenshot(path="sportsbet.png")
+        # cookies = context.cookies()
+
+        cookies = await context.cookies()
+        string_cookies = ''
+        for c in cookies:
+            if c['domain'] == '.sportsbet.io':
+                string_cookies += f"{c['name']}={c['value']};"
+        headers = {
+            'Accept': '*/*',
+            'Host': 'sportsbet.io',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Connection': 'keep-alive',
+            'Referer': 'https://sportsbet.io/pt/sports/soccer/inplay',
+            'content-type': 'application/json',
+            'Origin': 'https://sportsbet.io',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Cookie': string_cookies,
+        }
+        datapost = {"operationName": "SportQuery",
+                    "variables": {"language": "pt", "site": "sportsbet", "slug": "soccer"},
+                    "query": "query SportQuery($language: String!, $slug: String!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      name(language: $language)\n      enName: name(language: \"en\")\n      iconCode\n      liveEventCount: eventCount(childType: LIVE)\n      todayEventCount: eventCount(childType: TODAY)\n      futureEventCount: eventCount(childType: ANY)\n      leagues(childType: ANY) {\n        id\n        tournaments(childType: ANY) {\n          id\n          events(childType: ANY, first: 1) {\n            id\n            information {\n              provider_prefix\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+
+        contextP = await browser.new_context(base_url=url, ignore_https_errors=True, extra_http_headers=headers)
+        post_context = contextP.request
+        response = await post_context.post("/graphql", data=datapost)
+        await page.route('/graphql/', get_async_data)
+        while True:
+            await asyncio.sleep(30)
+        # page.on('requestfinished', local_request_finished_info)
+
+        # await page.goto('https://www.facebook.com/twdaynews', timeout=300000)
+        # await page.wait_for_load_state('load', timeout=300)
+        #print(f'title:{await page.title()}')
+
+asyncio.run(main())
+while True:
+    time.sleep(5)
+
+def get_sync_data(route, request):
+    method = 'POST'
+    postData = {"operationName":"SportQuery","variables":{"language":"pt","site":"sportsbet","slug":"soccer"},"query":"query SportQuery($language: String!, $slug: String!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      name(language: $language)\n      enName: name(language: \"en\")\n      iconCode\n      liveEventCount: eventCount(childType: LIVE)\n      todayEventCount: eventCount(childType: TODAY)\n      futureEventCount: eventCount(childType: ANY)\n      leagues(childType: ANY) {\n        id\n        tournaments(childType: ANY) {\n          id\n          events(childType: ANY, first: 1) {\n            id\n            information {\n              provider_prefix\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+    route.continue_(method, postData)
+
+launchOptionsX = proxy={
+        "server": '127.0.0.1:12960'#,
+        # 'username': 'My_user',
+        # "password": 'My_password',
+    }
 with sync_playwright() as p:
-    browser = p.firefox.launch(headless=True)
+    browser = p.firefox.launch(headless=False, proxy=launchOptionsX)
+
     # page = browser.new_page()
     # page.goto('https://sportsbet.io', wait_until="commit")
 
-    # context = browser.new_context(base_url="https://bet365.com")
-    # api_request_context = context.request
+    # context = browser.new_context(base_url="https://stake.com")
     # page = context.new_page()
-    # page.goto('/#/AS/B1/', wait_until="domcontentloaded", )
-    # time.sleep(20)
-    # #page.innerHTML('Stake.com - ')
-    # # page.on("response", lambda response: print("<<", response.headers, response.url))
-    # page.screenshot(path="bet365.png")
+    # page.goto('/', wait_until="networkidle", )
+    # locator = page.locator("footer").first
+    # locatorxx = page.locator('tag=div >> className="container svelte-x7f9v0"').first
+    # page.screenshot(path="stake.png")
 
 
-    context = browser.new_context(base_url="https://sportsbet.io")
-    api_request_context = context.request
+
+    context = browser.new_context(base_url="https://sportsbet.io", ignore_https_errors=True)
     page = context.new_page()
-    page.goto('/pt/sports',wait_until="load", )
+    page.set_viewport_size({'width': 1920, 'height': 870})
+    page.goto('/pt/sports', wait_until="domcontentloaded", )
+    #wait_for_selector
+    locatorxx = page.locator('tag=footer >> className="FooterContainer-sc-18uurvk-0 bUOomo"').first
     #page.on("response", lambda response: print("<<", response.headers, response.url))
-    page.screenshot(path="teste.png")
+    page.screenshot(path="sportsbet.png")
     cookies = context.cookies()
+
+    response = page.route('/api/graphql/', get_sync_data)
 
     string_cookies = ''
     for c in cookies:
@@ -42,7 +136,7 @@ with sync_playwright() as p:
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Referer': 'https://sportsbet.io/pt/sports',
+        'Referer': 'https://sportsbet.io/pt/sports/soccer/inplay',
         'content-type': 'application/json',
         'Origin': 'https://sportsbet.io',
         'Sec-Fetch-Dest': 'empty',
@@ -50,8 +144,8 @@ with sync_playwright() as p:
         'Sec-Fetch-Site': 'same-origin',
         'Cookie': string_cookies
     }
-    datapost = {"operationName":"DesktopEuropeanEventListPreviewQuery","variables":{"language":"pt","site":"sportsbet","tournamentId":"U3BvcnRzYmV0TmV3R3JhcGhxbFRvdXJuYW1lbnQ6NjA2NmMxMmI3MDMwMWM1ZTQyMTBiNTlj","childType":"LIVE","cricketIncluded":'false'},"query":"query DesktopEuropeanEventListPreviewQuery($language: String!, $tournamentId: GraphqlId!, $childType: SportsbetNewGraphqlTournamentEvents!, $cricketIncluded: Boolean!) {\n  sportsbetNewGraphql {\n    id\n    getTournamentById(id: $tournamentId) {\n      id\n      events(childType: $childType) {\n        ...DesktopEuropeanEventFragment\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment DesktopEuropeanEventFragment on SportsbetNewGraphqlEvent {\n  id\n  __typename\n  asian {\n    id\n    __typename\n    ftMatchWinner {\n      ...EventListMarketQueryFragment\n      __typename\n    }\n    ftTotal {\n      ...EventListMarketQueryFragment\n      __typename\n    }\n    ftHandicap {\n      ...EventListMarketQueryFragment\n      __typename\n    }\n  }\n  ...EventListInformationQueryFragment\n}\n\nfragment EventListMarketQueryFragment on SportsbetNewGraphqlMarket {\n  id\n  __typename\n  enName: name(language: \"en\")\n  name(language: \"en\")\n  status\n  specifiers\n  selections {\n    id\n    __typename\n    enName: name(language: \"en\")\n    name(language: $language)\n    active\n    odds\n    providerProductId\n  }\n  market_type {\n    id\n    __typename\n    name\n    description\n    translation_key\n    type\n    settings {\n      id\n      betBoostMultiplier\n      __typename\n    }\n  }\n}\n\nfragment EventListInformationQueryFragment on SportsbetNewGraphqlEvent {\n  id\n  __typename\n  type\n  status\n  start_time\n  market_count\n  live_odds\n  slug\n  name(language: $language)\n  enName: name(language: \"en\")\n  maxBetAvailable\n  videoStream {\n    id\n    __typename\n    streamAvailable\n  }\n  sport {\n    id\n    __typename\n    slug\n    name(language: $language)\n    betBoostMultiplier\n    iconCode\n  }\n  league {\n    id\n    __typename\n    slug\n    name(language: $language)\n    betBoostMultiplier\n  }\n  tournament {\n    id\n    __typename\n    slug\n    name(language: $language)\n    betBoostMultiplier\n  }\n  competitors {\n    id\n    __typename\n    name\n    type\n    betradarId\n  }\n  information {\n    id\n    __typename\n    match_time\n    provider_prefix\n    period_scores {\n      id\n      __typename\n      home_score\n      away_score\n    }\n    match_status_translations(language: $language)\n    home_score\n    away_score\n    home_gamescore\n    away_gamescore\n    provider_product_id\n  }\n  premiumCricketScoringData @include(if: $cricketIncluded) {\n    ...CricketStatsFragment\n    __typename\n  }\n  isSportcastFixtureActive\n  sportcastFixtureId\n}\n\nfragment CricketStatsFragment on SportsbetNewGraphqlPremiumCricketScore {\n  id\n  matchTitle\n  matchCommentary\n  battingTeam {\n    id\n    teamWickets\n    teamRuns\n    teamOvers\n    teamName\n    sixes\n    fours\n    extras\n    competitorId\n    __typename\n  }\n  previousInnings {\n    id\n    wickets\n    teamName\n    summary\n    runs\n    oversAvailable\n    overs\n    inningsNumber\n    conclusion\n    competitorId\n    __typename\n  }\n  overs {\n    id\n    runs\n    overNumber\n    isCurrentOver\n    balls\n    __typename\n  }\n  batsmen {\n    sixes\n    runs\n    onStrike\n    fours\n    batsmanName\n    balls\n    active\n    __typename\n  }\n  __typename\n}\n"}
-    response = api_request_context.post("/graphql", headers=headers, data=datapost)
+    datapost = {"operationName":"SportQuery","variables":{"language":"pt","site":"sportsbet","slug":"soccer"},"query":"query SportQuery($language: String!, $slug: String!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      name(language: $language)\n      enName: name(language: \"en\")\n      iconCode\n      liveEventCount: eventCount(childType: LIVE)\n      todayEventCount: eventCount(childType: TODAY)\n      futureEventCount: eventCount(childType: ANY)\n      leagues(childType: ANY) {\n        id\n        tournaments(childType: ANY) {\n          id\n          events(childType: ANY, first: 1) {\n            id\n            information {\n              provider_prefix\n              __typename\n            }\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+    response = context.request.post("/graphql", headers=headers, data=datapost)
     teste = page.innerHTML()
     ua = page.query_selector(".user-agent")
     ua.inner_html()
