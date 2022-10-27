@@ -26,7 +26,7 @@ def stake():
 
 def sportsbet():
     v_sportsbet = c_sportsbet(conexao)
-    v_sportsbet.get_dados()
+    v_sportsbet.get_data()
 def betpix365():
     v_betpix365 = c_betpix365(conexao)
     # v_betpix365.get_dados()
@@ -40,7 +40,7 @@ def betpix365():
         with open("rotas.json") as json_file:
             v_betpix365.all_campeonatos = json.load(json_file)
 
-t = Thread(target=stake, )
+t = Thread(target=sportsbet, )
 t.start()
 t.join()
 

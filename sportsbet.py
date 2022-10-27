@@ -2,35 +2,106 @@ from acessos import *
 from bs4 import BeautifulSoup
 import codecs, json, time
 from playwright.sync_api import sync_playwright
+from datetime import  datetime
+import asyncio
 class c_sportsbet:
     def __init__(self, conexao):
         self.sessao = requests.session()
-        self.id_site = 2
+        self.id_site = 3
+        self.site_name = "SPORTSBET.IO"
+        self.add_ind = True
         self.mysql_conn = conexao
         #self.cookies = '__cfwaitingroom=Chh4SUdKOEIvL3A2dEpuUGZLWWpxU2RBPT0SkAJJQlBhbEJIUEFzMjNDZlVKZlQ5czZJd2tvVlM3Wk85bEpNbDloS2VPSnNkQXBKa2Fkd2Vud0Z0NTAyandtWHZlVXl1Z1Y1ODF2SXRPRW9Sd0Q2UXU5Wk9hMEVnNXZpU3dtSWJIMHBRcWgrb0NMN08xRXlVMzBRcmVlMlVMV0Fnb0YwSmNBS2l4TVpZK2d0OVRYTTg2QXI5MGtud1lEejJJR2hOa3NHN29PbFJuK1NxckZHak1kQmNvc1JRZ3FoZzZOTThySGllZElWQ2RkWHRJaUh3Y2YvOTF1R3l2TkdoNitOL1dkRVNNei9BNVAyUmF3UWtnMFJmK3dMR3ZuK3J6dmtOSURmblNIQWc0emtKNA%3D%3D; _ga_SEKFV66B0S=GS1.1.1666120922.5.0.1666120922.60.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.5.1666118246.1666115462.6cd15c9f-79ea-4ace-b908-954a36708154; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; fs_uid=#BN5B8#4935986190192640:4955098419007488:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1666721925579,"i_l":3}; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; _gid=GA1.2.1016127202.1666115464; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=wA2ut61F1buOGqB6yH6n2RYBpR.d2E3lwhWA0bMudt8-1666120924-0-Adz1Qtsa2YQlbKzZ9U8jOCApkeh5TdgvEiZnB+qrby1PykOxoSc0AgSbeOUljC0ebquimOUToTCiuBtjtPDDDPY='
         #self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0'
         self.sports = {}
         self.paises = {}
         self.campeonatos = {}
+        self.eventos = {}
+        self.competidores = {}
         self.proxy = {'server': '127.0.0.1:12960'}
         self.p = sync_playwright().start()
         self.browser = self.p.firefox.launch(headless=False, proxy=self.proxy)
         self.context = self.browser.new_context(base_url="https://sportsbet.io", ignore_https_errors=True, locale="pt-BR")
         self.page = self.context.new_page()
+        #self.page.__setattr__('_allowInterception', True)
         self.first_acess()
 
     def get_data(self):
         for sport in self.sports:
+            print(f'{self.site_name} - Capturando dados esporte: {self.sports[sport]["name"]}...')
             datapost = {"operationName": "SportQuery",
                         "variables": {"language": "pt", "site": "sportsbet", "slug": sport, "timePeriod": "ANY",
                                       "leagueTournaments": "ANY"},
                         "query": "query SportQuery($language: String!, $slug: String!, $site: String) {\n  sportsbetNewGraphql {\n    id\n    getSportBySlug(slug: $slug, site: $site) {\n      id\n      slug\n      name(language: $language)\n      enName: name(language: \"en\")\n      leagues(childType: ANY) {\n        id\n        slug\n        name(language: $language)\n        tournaments(childType: ANY) {\n          id\n        slug\n        name(language: $language)\n          events(childType: ANY, first: 1) {\n            id\n        slug\n        name(language: $language)\n  status\n  start_time\n  market_count\n  live_odds\n  competitors {\n    id\n    name\n    type\n  }\n      mainMarkets {\n        ...MainEventMarketFragment\n      }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment MainEventMarketFragment on SportsbetNewGraphqlMarket {\n  id\n  name(language: $language)\n  englishName: name(language: \"en\")\n  enName: name(language: \"en\")\n  status\n  selections {\n    ...ListEventMarketSelectionFragment\n  }\n  market_type {\n    id\n    name\n    description\n    translation_key\n    type\n    settings {\n      id\n      betBoostMultiplier\n    }\n  }\n  specifiers\n}\n\nfragment ListEventMarketSelectionFragment on SportsbetNewGraphqlMarketSelection {\n  id\n  name(language: $language)\n  enName: name(language: \"en\")\n  active\n  odds\n  probabilities\n  providerProductId\n}\n"}
             retorno = self.post_data(datapost)
-            if retorno != None:
-                    xxx = 0
+            if retorno != None and 'data' in retorno and 'sportsbetNewGraphql' in retorno['data'] and 'getSportBySlug' in retorno['data']['sportsbetNewGraphql'] and 'leagues' in retorno['data']['sportsbetNewGraphql']['getSportBySlug']:
+                for pais in retorno['data']['sportsbetNewGraphql']['getSportBySlug']['leagues']:
+                    if not pais['slug'] in self.paises:
+                        insert_pais(self, pais["name"].strip(), pais["slug"], pais["id"], add_ind=self.add_ind)
+                    for camp in pais['tournaments']:
+                        if not camp['slug'] in self.campeonatos and camp['name'] != None:
+                            insert_camp(self, camp['name'].strip(), camp['slug'], camp['id'], self.sports[sport], self.paises[pais["slug"]], add_ind=self.add_ind)
+                        for event in camp['events']:
+                            if not camp['id'] in self.eventos:
+                                #insert_event(self, t['name'].strip(), t['slug'], t['id'], self.sports[sport], self.paises[p["slug"]])
+                                start_time = datetime.fromtimestamp(event['start_time'])
+                                insert_event(self, start_time, event['name'].strip(),  event['slug'], event['id'], event['status'], self.sports[sport], self.paises[pais["slug"]],
+                                             self.campeonatos[camp["slug"]], add_ind=self.add_ind)
+                            if 'competitors' in event:
+                                for compet in event['competitors']:
+                                    if (sport, compet['id']) in self.competidores:
+                                        insert_compet(self, self.sports[sport], compet['id'], compet['name'], add_ind=self.add_ind)
 
+
+                            xxx = 0
+                            # self.campeonatos[t['slug']] = {'name': t['name'].strip(), 'id': t['id']}
+                            # sqlxx = f'INSERT INTO sit_camp (id_site, id_site_sport, id_site_pais, id_site_camp, site_camp_name, slug) VALUES ({self.id_site},{self.sports[e]["id_bd"]}, {self.paises[p["slug"]]["id_bd"]}, "{t["id"]}","{t["name"].strip()}","{t["slug"]}") ON DUPLICATE KEY UPDATE site_camp_name="{t["name"].strip()}", slug="{t["slug"]}";'
+                            # self.conexao.bd(sqlxx, fetch=False)
+                    xxxxx = 0
+
+    async def request_interception(self, req, datapost):
+        """ await page.setRequestInterception(True) would block the flow, the interception is enabled individually """
+        # enable interception
+        req.__setattr__('_allowInterception', True)
+        if req.url.startswith('https://sportsbet.io/graphql'):
+            self.on_req(req, datapost)
+            print(f"\nreq.url: {req.url}")
+            print(f"  req.resourceType: {req.resourceType}")
+            print(f"  req.method: POST")
+            print(f"  req.postData: {datapost}")
+            print(f"  req.headers: {req.headers}")
+            print(f"  req.response: {req.response}")
+        else:
+            return await req.continue_()
+
+    def on_req(self, req, postdata):
+        asyncio.create_task(req.continue_({
+            "method": "POST",
+            "postData": postdata,
+            "headers": {
+                **req.headers,
+                "Content-Type": "application/json"
+            }
+        }))
     def post_data(self, datapost):
         try:
+            #self.page.setRequestInterceptionEnabled(True)
+            # self.page.on("request", lambda request: print(request.url + " " + request.failure))
+            # self.page.on('request', lambda req: asyncio.ensure_future(self.request_interception(req, datapost)))
+            # self.page.on('request', request= > {
+            #     const
+            # overrides = {};
+            # if (request.url === 'http://www.google.com') {
+            # overrides.method = 'POST';
+            # overrides.postData = 'a=b&c=d';
+            # }
+            # request.
+            # continue
+            # (overrides);
+            # });
+            # await page.goto('http://www.google.com');
+
+            # self.page.goto("/graphql", wait_until="domcontentloaded")
             testepost = self.context.request
             response = testepost.post("/graphql", data=datapost, timeout=0).text()
             json_s = json.loads(response)
@@ -39,6 +110,7 @@ class c_sportsbet:
             print(e)
             return None
     def first_acess(self):
+        print(f'{self.site_name} - Iniciando acesso...')
         path = '/pt/sports'
         self.page.set_viewport_size({'width': 1920, 'height': 870})
         self.page.goto(path, wait_until="domcontentloaded")
@@ -52,12 +124,13 @@ class c_sportsbet:
                 end = data.find('window.APPLICATION_CONTEXT=JSON.parse("')
                 substring = data[start:end].strip()[:-3]
                 data_json = json.loads(codecs.decode(substring, 'unicode_escape'))
+                print(f'{self.site_name} - Capturando indice de esportes...')
                 for t in data_json:
                     if '__typename' in data_json[t] and data_json[t][
                         '__typename'] == 'SportsbetNewGraphqlSportCategory':
                         nome = data_json[t]['name({"language":"pt"})'].strip()
                         insert_sports(self, nome.encode("latin-1").decode("utf-8"), data_json[t]['slug'],
-                                      data_json[t]['id'])
+                                      data_json[t]['id'], add_ind=self.add_ind)
     #
     # def get_dados(self):
     #     self.get_all_sports()

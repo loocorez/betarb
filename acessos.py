@@ -63,3 +63,38 @@ def insert_camp(self, nomex, slug, id, sports, paises, add_ind=False):
         if t_id_bd: id_bd = t_id_bd[0][0]
     self.campeonatos[slug] = {'name': nomex, 'id_bd': id_bd, 'id_site': id}
 
+def insert_event(self, start_time, event_name, site_slug, site_id, site_status, sports, paises, camps, add_ind=False):
+    sqlxx = f'INSERT INTO sit_events (id_ind_site, id_site_sport, id_site_pais, id_site_camp, start_time, event_name, site_slug, site_id, site_status) ' \
+            f'VALUES ({self.id_site}, {sports["id_bd"]}, {paises["id_bd"]}, {camps["id_bd"]}, "{start_time}","{event_name}","{site_slug}", "{site_id}", {site_status}) ON DUPLICATE KEY ' \
+            f'UPDATE start_time="{start_time}", event_name="{event_name}", site_slug="{site_slug}", site_status={site_status};'
+    id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
+    if id_bd == 0:
+        t_id_bd = self.mysql_conn.bd(f'SELECT id FROM sit_events WHERE id_ind_site = {self.id_site} and site_id="{site_id}"', fetch=True)
+        if t_id_bd: id_bd = t_id_bd[0][0]
+    self.eventos[site_id] = {'name': event_name, 'id_bd': id_bd, 'id_site': site_id, "start_time": start_time}
+    if add_ind:
+        sqlxx = f'INSERT IGNORE INTO ind_events (id_ind_site, id_sit_events) VALUES ({self.id_site}, {id_bd});'
+        id_ind_events = self.mysql_conn.bd(sqlxx, fetch=False)
+        if id_ind_events == 0:
+            t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE id_ind_site = {self.id_site} and id_sit_events="{id_bd}"', fetch=True)
+            if t_id_ind_events: id_ind_events = t_id_ind_events[0][0]
+        sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
+        self.mysql_conn.bd(sqlxx, fetch=False)
+
+def insert_compet(self, sports, site_id_compet, site_nome_compet, add_ind=False):
+    sqlxx = f'INSERT INTO sit_compet (id_ind_site, id_site_sport, site_nome_compet, site_id_compet, id_ind_compet) ' \
+            f'VALUES ({self.id_site}, {sports["id_bd"]}, "{site_nome_compet}", "{site_id_compet}") ON DUPLICATE KEY ' \
+            f'UPDATE site_nome_compet="{site_nome_compet}";'
+    id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
+    if id_bd == 0:
+        t_id_bd = self.mysql_conn.bd(f'SELECT id FROM sit_events WHERE id_ind_site = {self.id_site} and site_id="{site_id_compet}"', fetch=True)
+        if t_id_bd: id_bd = t_id_bd[0][0]
+    self.compet[(sports['id_bd'], site_id_compet)] = {'name': site_nome_compet, 'id_bd': id_bd, 'id_site': site_id_compet}
+    if add_ind:
+        sqlxx = f'INSERT IGNORE INTO ind_compet (id_ind_sport, nome) VALUES ({self.id_site}, {id_bd});'
+        id_ind_events = self.mysql_conn.bd(sqlxx, fetch=False)
+        if id_ind_events == 0:
+            t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE id_ind_site = {self.id_site} and id_sit_events="{id_bd}"', fetch=True)
+            if t_id_ind_events: id_ind_events = t_id_ind_events[0][0]
+        sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
+        self.mysql_conn.bd(sqlxx, fetch=False)
