@@ -26,7 +26,8 @@ def stake():
 
 def sportsbet():
     v_sportsbet = c_sportsbet(conexao)
-    v_sportsbet.get_data()
+    v_sportsbet.get_data(sim=True)
+    xx = 0
 def betpix365():
     v_betpix365 = c_betpix365(conexao)
     # v_betpix365.get_dados()

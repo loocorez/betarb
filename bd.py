@@ -28,6 +28,7 @@ class class_bd:
                 return None
         except mysql.connector.Error as error:
             print("Failed to insert record into table {}".format(error))
+            records = None
         finally:
             if connection.is_connected():
                 connection.close()
