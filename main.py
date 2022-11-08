@@ -41,7 +41,7 @@ def betpix365():
         with open("rotas.json") as json_file:
             v_betpix365.all_campeonatos = json.load(json_file)
 
-t = Thread(target=sportsbet, )
+t = Thread(target=stake, )
 t.start()
 t.join()
 

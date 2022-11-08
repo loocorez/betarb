@@ -26,7 +26,7 @@ def checknan(valor):
         return vazio
 def insert_sports(self, nomex, slug, id, add_ind=False):
     if not slug in self.sports:
-        if add_ind: self.mysql_conn.bd(f'INSERT IGNORE INTO ind_sports (sport_name) VALUES ("{nomex}");', fetch=False)
+        if add_ind: self.mysql_conn.bd(f'INSERT IGNORE INTO ind_sports (sport_name, slug) VALUES ("{nomex}", "{slug}");', fetch=False)
         sqlgg = f'SELECT id from ind_sports WHERE sport_name="{nomex}";'
         check_ind = self.mysql_conn.bd(sqlgg, fetch=True)
         if check_ind:
@@ -35,16 +35,18 @@ def insert_sports(self, nomex, slug, id, add_ind=False):
             sqlxx = f'INSERT INTO sit_sports (id_site, id_site_sport, site_sport_name, slug) VALUES ({self.id_site},"{id}","{nomex}", "{slug}") ON DUPLICATE KEY UPDATE site_sport_name="{nomex}", slug="{slug}";'
         id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
         id_ind = 0
+        ativo = 1
         if id_bd == 0:
-            t_id_bd = self.mysql_conn.bd(f'SELECT id, id_ind_sport FROM sit_sports WHERE id_site = {self.id_site} and id_site_sport = "{id}"', fetch=True)
+            t_id_bd = self.mysql_conn.bd(f'SELECT id, id_ind_sport, ativo FROM sit_sports WHERE id_site = {self.id_site} and id_site_sport = "{id}"', fetch=True)
             if t_id_bd:
                 id_bd = t_id_bd[0][0]
                 id_ind = t_id_bd[0][1]
+                ativo = t_id_bd[0][2]
         else:
             t_id_ind = self.mysql_conn.bd(f'SELECT id_ind_sport FROM sit_sports WHERE id = {id_bd}', fetch=True)
             if t_id_ind:
                 id_ind = t_id_ind[0][0]
-        self.sports[slug] = {'name': nomex, 'slug': slug, 'id_bd': id_bd, 'id_site': id, 'id_ind': id_ind}
+        self.sports[slug] = {'name': nomex, 'slug': slug, 'id_bd': id_bd, 'id_site': id, 'id_ind': id_ind, 'ativo': ativo}
 
 def insert_pais(self, nomex, slug, id, add_ind=False):
     if not slug in self.paises:
@@ -122,6 +124,10 @@ def insert_event(self, start_time, event_name, site_slug, site_id, site_status, 
                     id_ind_events = t_id_ind_events[0][0]
             sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
             self.mysql_conn.bd(sqlxx, fetch=False)
+        # else:
+        #     sqlxx = f'INSERT IGNORE INTO ind_events (id_ind_site, id_sit_events) VALUES ({self.id_site}, {id_bd});'
+        #     id_ind_events = self.mysql_conn.bd(sqlxx, fetch=False)
+        #     sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
         self.eventos[site_id] = {'name': event_name, 'id_bd': id_bd, 'id_site': site_id, 'id_ind': id_ind_events, "start_time": start_time}
 
 def insert_compet(self, sport, evento, site_id_compet, site_nome_compet, sit_tipo_compet, add_ind=False):
@@ -148,40 +154,43 @@ def insert_compet(self, sport, evento, site_id_compet, site_nome_compet, sit_tip
             self.mysql_conn.bd(sqlxx, fetch=False)
         self.competidores[(sport, site_id_compet)] = {'name': site_nome_compet, 'id_bd': id_bd, 'id_site': site_id_compet, 'id_ind': id_ind_compet}
 
-def insert_mercado(self, sport, site_id_market, site_nome_market, site_nome_market2, site_key, site_status_market, site_type_market, add_ind=False):
+def insert_mercado(self, sport, site_id_market, site_nome_market, site_key, site_status_market, site_type_market, add_ind=False):
     if not (sport, site_id_market) in self.mercados:
         sports = self.sports[sport]
-        sqlxx = f'INSERT INTO sit_mercados (id_site_sport, market_name, market_name2, market_key, site_id_market, tipo, status) ' \
-                f'VALUES ({sports["id_bd"]}, "{site_nome_market}", "{site_nome_market2}", "{site_key}", "{site_id_market}", {site_type_market}, {site_status_market}) ON DUPLICATE KEY ' \
-                f'UPDATE market_name="{site_nome_market}", market_name2="{site_nome_market2}", market_key="{site_key}", tipo={site_type_market}, status={site_status_market};'
+        sqlxx = f'INSERT INTO sit_mercados (id_site_sport, market_name, market_key, site_id_market, tipo, status) ' \
+                f'VALUES ({sports["id_bd"]}, "{site_nome_market}", "{site_key}", "{site_id_market}", {site_type_market}, {site_status_market}) ON DUPLICATE KEY ' \
+                f'UPDATE market_name="{site_nome_market}", market_key="{site_key}", tipo={site_type_market}, status={site_status_market};'
         id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
+        ativo = 1
         if id_bd == 0:
-            t_id_bd = self.mysql_conn.bd(f'SELECT id FROM sit_mercados WHERE id_site_sport = {sports["id_bd"]} and site_id_market="{site_id_market}"', fetch=True)
-            if t_id_bd: id_bd = t_id_bd[0][0]
+            t_id_bd = self.mysql_conn.bd(f'SELECT id, ativo FROM sit_mercados WHERE id_site_sport = {sports["id_bd"]} and site_id_market="{site_id_market}"', fetch=True)
+            if t_id_bd:
+                id_bd = t_id_bd[0][0]
+                ativo = t_id_bd[0][1]
         id_ind_mercado = 0
         if add_ind and not checknan(sports['id_ind']) and sports['id_ind'] > 0: #not checknan(sports['id_ind']) and
-            sqlxx = f'INSERT IGNORE INTO ind_mercados (id_ind_sport, nome, nome2, tipo) VALUES ({sports["id_ind"]}, "{site_nome_market}", "{site_nome_market2}", {site_type_market});'
+            sqlxx = f'INSERT IGNORE INTO ind_mercados (id_ind_sport, nome, tipo) VALUES ({sports["id_ind"]}, "{site_nome_market}", {site_type_market});'
             id_ind_mercado = self.mysql_conn.bd(sqlxx, fetch=False)
             if id_ind_mercado == 0:
                 t_id_ind_mercado = self.mysql_conn.bd(f'SELECT id FROM ind_mercados WHERE id_ind_sport = {sports["id_ind"]} and nome="{site_nome_market}"', fetch=True)
                 if t_id_ind_mercado: id_ind_mercado = t_id_ind_mercado[0][0]
             sqlxx = f'UPDATE sit_mercados SET id_ind_mercado={id_ind_mercado} WHERE id={id_bd};'
             self.mysql_conn.bd(sqlxx, fetch=False)
-        self.mercados[(sport, site_id_market)] = {'name': site_nome_market, 'name2': site_nome_market2,'id_bd': id_bd, 'id_site': site_id_market, 'id_ind': id_ind_mercado, 'selecoes': {}}
+        self.mercados[(sport, site_id_market)] = {'name': site_nome_market, 'market_key': site_key, 'id_bd': id_bd, 'id_site': site_id_market, 'id_ind': id_ind_mercado, 'ativo': ativo, 'selecoes': {}}
 
-def insert_selecao(self, sport, site_id_market, site_nome_selecao, site_nome_selecao2, add_ind=False):
+def insert_selecao(self, sport, site_id_market, site_nome_selecao, add_ind=False):
     mercados = self.mercados[(sport, site_id_market)]
     if not site_nome_selecao in mercados['selecoes']:
-        sqlxx = f'INSERT INTO sit_selecoes (id_sit_mercado, selecao_nome, selecao_nome2) ' \
-                f'VALUES ({mercados["id_bd"]}, "{site_nome_selecao}", "{site_nome_selecao2}") ON DUPLICATE KEY ' \
-                f'UPDATE selecao_nome="{site_nome_selecao}", selecao_nome2="{site_nome_selecao2}";'
+        sqlxx = f'INSERT INTO sit_selecoes (id_sit_mercado, selecao_nome) ' \
+                f'VALUES ({mercados["id_bd"]}, "{site_nome_selecao}") ON DUPLICATE KEY ' \
+                f'UPDATE selecao_nome="{site_nome_selecao}";'
         id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
         if id_bd == 0:
             t_id_bd = self.mysql_conn.bd(f'SELECT id FROM sit_selecoes WHERE id_sit_mercado = {mercados["id_bd"]} and selecao_nome="{site_nome_selecao}"', fetch=True)
             if t_id_bd: id_bd = t_id_bd[0][0]
         id_ind_selecao = 0
         if add_ind and not checknan(mercados['id_ind']) and mercados['id_ind'] > 0:  #
-            sqlxx = f'INSERT IGNORE INTO ind_selecoes (id_ind_mercado, nome, nome2) VALUES ({mercados["id_ind"]}, "{site_nome_selecao}", "{site_nome_selecao2}");'
+            sqlxx = f'INSERT IGNORE INTO ind_selecoes (id_ind_mercado, nome) VALUES ({mercados["id_ind"]}, "{site_nome_selecao}");'
             id_ind_selecao = self.mysql_conn.bd(sqlxx, fetch=False)
             if id_ind_selecao == 0:
                 t_id_ind_selecao = self.mysql_conn.bd(
@@ -189,7 +198,7 @@ def insert_selecao(self, sport, site_id_market, site_nome_selecao, site_nome_sel
                 if t_id_ind_selecao: id_ind_selecao = t_id_ind_selecao[0][0]
             sqlxx = f'UPDATE sit_selecoes SET id_ind_selecao={id_ind_selecao} WHERE id={id_bd};'
             self.mysql_conn.bd(sqlxx, fetch=False)
-        self.mercados[(sport, site_id_market)]['selecoes'][site_nome_selecao] = {'name': site_nome_selecao, 'name2': site_nome_selecao2, 'id_bd': id_bd, 'id_ind': id_ind_selecao}
+        self.mercados[(sport, site_id_market)]['selecoes'][site_nome_selecao] = {'name': site_nome_selecao,  'id_bd': id_bd, 'id_ind': id_ind_selecao} #'name2': site_nome_selecao2,
 def insert_update_odd(self, id_sit_evento, id_sit_selecao, odd):
     sqlxx = f'INSERT INTO sit_events_odds (id_sit_evento, id_sit_selecao, odd) ' \
             f'VALUES ({id_sit_evento}, "{id_sit_selecao}", "{odd}") ON DUPLICATE KEY ' \

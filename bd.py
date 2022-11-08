@@ -7,7 +7,7 @@ class class_bd:
             keys = json.load(f)
         self.connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool", pool_size=10, pool_reset_session=True,
                                                       user=keys["mysql_user"], password=keys["mysql_pass"],
-                                                      host=keys["mysql_host"], database='new_sports')
+                                                      host=keys["mysql_host"], database='new_sports1')
 
     def bd(self, sql, fetch=False):
         try:

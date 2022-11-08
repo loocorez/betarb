@@ -1,7 +1,9 @@
 from acessos import *
 from bs4 import BeautifulSoup
 import codecs, json, time
+from datetime import datetime
 from playwright.sync_api import sync_playwright
+import urllib.request
 class c_stake:
     def __init__(self, conexao):
         self.sessao = requests.session()
@@ -12,6 +14,10 @@ class c_stake:
         self.sports = {}
         self.paises = {}
         self.campeonatos = {}
+        self.eventos = {}
+        self.competidores = {}
+        self.mercados = {}
+        self.add_ind = False
         self.proxy = {'server': '127.0.0.1:12960'}
         self.p = sync_playwright().start()
         self.browser = self.p.firefox.launch(headless=False, proxy=self.proxy)
@@ -21,26 +27,116 @@ class c_stake:
         self.get_data()
     def get_data(self):
         for sport in self.sports:
-            datapost = {"query":"query SportIndex($sport: String!, $group: String!, $type: SportSearchEnum = popular) {\n  slugSport(sport: $sport) {\n    id\n    name\n    templates(group: $group) {\n      id\n      name\n      extId\n    }\n    firstTournament: tournamentList(type: $type, limit: 1) {\n      id\n      name\n      fixtureCount(type: $type)\n      fixtureList(type: $type, limit: 10) {\n        ...FixturePreview\n        groups(groups: [$group], status: [active, suspended, deactivated]) {\n          ...SportGroupTemplates\n        }\n      }\n    }\n    tournamentList(type: $type, limit: 5) {\n      id\n      name\n      slug\n      fixtureCount(type: $type)\n      category {\n        id\n        slug\n        name\n      }\n    }\n    categoryList(type: $type, limit: 1000) {\n      id\n      slug\n      name\n      fixtureCount(type: $type)\n      tournamentList(type: $type, limit: 1000) {\n        id\n        slug\n        name\n        fixtureCount(type: $type)\n      }\n    }\n  }\n}\n\nfragment FixturePreview on SportFixture {\n  id\n  ...SportFixtureLiveStreamExists\n  status\n  slug\n  marketCount(status: [active, suspended])\n  extId\n  data {\n    __typename\n    ...SportFixtureDataMatch\n    ...SportFixtureDataOutright\n  }\n  tournament {\n    ...TournamentTreeNested\n  }\n  eventStatus {\n    ...SportFixtureEventStatus\n  }\n}\n\nfragment SportFixtureLiveStreamExists on SportFixture {\n  id\n  betradarStream {\n    exists\n  }\n  imgArenaStream {\n    exists\n  }\n  abiosStream {\n    exists\n    stream {\n      startTime\n      id\n    }\n  }\n  geniussportsStream(deliveryType: hls) {\n    exists\n  }\n}\n\nfragment SportFixtureDataMatch on SportFixtureDataMatch {\n  startTime\n  competitors {\n    ...SportFixtureCompetitor\n  }\n  __typename\n}\n\nfragment SportFixtureCompetitor on SportFixtureCompetitor {\n  name\n  extId\n  countryCode\n  abbreviation\n}\n\nfragment SportFixtureDataOutright on SportFixtureDataOutright {\n  name\n  startTime\n  endTime\n  __typename\n}\n\nfragment TournamentTreeNested on SportTournament {\n  id\n  name\n  slug\n  category {\n    ...CategoryTreeNested\n  }\n}\n\nfragment CategoryTreeNested on SportCategory {\n  id\n  name\n  slug\n  sport {\n    id\n    name\n    slug\n  }\n}\n\nfragment SportFixtureEventStatus on SportFixtureEventStatus {\n  homeScore\n  awayScore\n  matchStatus\n  clock {\n    matchTime\n    remainingTime\n  }\n  periodScores {\n    homeScore\n    awayScore\n    matchStatus\n  }\n  currentServer {\n    extId\n  }\n  homeGameScore\n  awayGameScore\n  statistic {\n    yellowCards {\n      away\n      home\n    }\n    redCards {\n      away\n      home\n    }\n    corners {\n      home\n      away\n    }\n  }\n}\n\nfragment SportGroupTemplates on SportGroup {\n  ...SportGroup\n  templates(limit: 3, includeEmpty: true) {\n    ...SportGroupTemplate\n    markets(limit: 1) {\n      ...SportMarket\n      outcomes {\n        ...SportMarketOutcome\n      }\n    }\n  }\n}\n\nfragment SportGroup on SportGroup {\n  name\n  translation\n  rank\n}\n\nfragment SportGroupTemplate on SportGroupTemplate {\n  extId\n  rank\n  name\n}\n\nfragment SportMarket on SportMarket {\n  id\n  name\n  status\n  extId\n  specifiers\n  customBetAvailable\n}\n\nfragment SportMarketOutcome on SportMarketOutcome {\n  active\n  id\n  odds\n  name\n  customBetAvailable\n}\n","variables":{"sport":"soccer","group":"winner"}}
-            headers = {"Referer": f"https://stake.com/sports/soccer",
-                       "Accept-Language": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3",
-                       "Origin": "https://stake.com",
-                       "x-forwarded-for": "187.19.130.235, 162.158.38.16, 172.20.241.65",
-                       "cf-device-type":"",
-                       "cf-ipcountry": "BR",
-                       "Sec-Fetch-Dest": "empty",
-                       "Sec-Fetch-Mode": "cors",
-                       "Sec-Fetch-Site": "same-origin",
-                       "x-language": "br"
-            }
-            retorno = self.post_data(datapost, headers)
-            if retorno != None:
-                    xxx = 0
+            post_sport_data = {"query":"query TournamentTableList($sport: String!) {\n  slugSport(sport: $sport) {\n    id\n    name\n    slug\n    categoryList(limit: 100, type: active) {\n      id\n      name\n      slug\n      fixtureCount(type: active)\n      tournamentList(limit: 50, type: active) {\n        id\n        name\n        slug\n        fixtureCount(type: active)\n      }\n    }\n  }\n}\n","variables":{"sport": sport}}
+            sport_data = self.post_data(post_sport_data, f"https://stake.com/sports/{sport}")
+            if sport_data != None and 'data' in sport_data and 'slugSport' in sport_data['data'] and 'categoryList' in sport_data['data']['slugSport']:
+                for pais in sport_data['data']['slugSport']['categoryList']:
+                    paisx = "" if pais["name"] == None else pais["name"].strip()
+                    insert_pais(self, paisx, pais["slug"], pais["id"], add_ind=self.add_ind)
+                    if 'tournamentList' in pais:
+                        for camp in pais['tournamentList']:
+                            campx = "" if camp['name'] == None else camp['name'].strip()
+                            insert_camp(self, campx, camp['slug'], camp['id'], sport, pais["slug"], add_ind=self.add_ind)
+                            post_camp_data = {"query":"query SlugTournament($sport: String!, $category: String!, $tournament: String!, $type: SportSearchEnum!, $groups: [String!]!, $limit: Int = 50, $offset: Int = 0) {\n  slugTournament(sport: $sport, category: $category, tournament: $tournament) {\n    id\n    name\n    fixtureCount(type: $type)\n    fixtureList(type: $type, limit: $limit, offset: $offset) {\n      ...FixturePreview\n      groups(groups: $groups, status: [active, suspended, deactivated]) {\n        ...SportGroupTemplates\n      }\n    }\n  }\n}\n\nfragment FixturePreview on SportFixture {\n  id\n  ...SportFixtureLiveStreamExists\n  status\n  slug\n  marketCount(status: [active, suspended])\n  extId\n  data {\n    __typename\n    ...SportFixtureDataMatch\n    ...SportFixtureDataOutright\n  }\n  tournament {\n    ...TournamentTreeNested\n  }\n  eventStatus {\n    ...SportFixtureEventStatus\n  }\n}\n\nfragment SportFixtureLiveStreamExists on SportFixture {\n  id\n  betradarStream {\n    exists\n  }\n  imgArenaStream {\n    exists\n  }\n  abiosStream {\n    exists\n    stream {\n      startTime\n      id\n    }\n  }\n  geniussportsStream(deliveryType: hls) {\n    exists\n  }\n}\n\nfragment SportFixtureDataMatch on SportFixtureDataMatch {\n  startTime\n  competitors {\n    ...SportFixtureCompetitor\n  }\n  __typename\n}\n\nfragment SportFixtureCompetitor on SportFixtureCompetitor {\n  name\n  extId\n  countryCode\n  abbreviation\n}\n\nfragment SportFixtureDataOutright on SportFixtureDataOutright {\n  name\n  startTime\n  endTime\n  __typename\n}\n\nfragment TournamentTreeNested on SportTournament {\n  id\n  name\n  slug\n  category {\n    ...CategoryTreeNested\n  }\n}\n\nfragment CategoryTreeNested on SportCategory {\n  id\n  name\n  slug\n  sport {\n    id\n    name\n    slug\n  }\n}\n\nfragment SportFixtureEventStatus on SportFixtureEventStatus {\n  homeScore\n  awayScore\n  matchStatus\n  clock {\n    matchTime\n    remainingTime\n  }\n  periodScores {\n    homeScore\n    awayScore\n    matchStatus\n  }\n  currentServer {\n    extId\n  }\n  homeGameScore\n  awayGameScore\n  statistic {\n    yellowCards {\n      away\n      home\n    }\n    redCards {\n      away\n      home\n    }\n    corners {\n      home\n      away\n    }\n  }\n}\n\nfragment SportGroupTemplates on SportGroup {\n  ...SportGroup\n  templates(limit: 50, includeEmpty: true) {\n    ...SportGroupTemplate\n    markets(limit: 1) {\n      ...SportMarket\n      outcomes {\n        ...SportMarketOutcome\n      }\n    }\n  }\n}\n\nfragment SportGroup on SportGroup {\n  name\n  translation\n  rank\n}\n\nfragment SportGroupTemplate on SportGroupTemplate {\n  extId\n  rank\n  name\n}\n\nfragment SportMarket on SportMarket {\n  id\n  name\n  status\n  extId\n  specifiers\n  customBetAvailable\n}\n\nfragment SportMarketOutcome on SportMarketOutcome {\n  active\n  id\n  odds\n  name\n  customBetAvailable\n}\n","variables":{"type":"popular","tournament": camp['slug'],"category":pais['slug'],"sport":"soccer","groups":["main", "goals", "1st2ndhalfmarkets", "AsianLines"],"limit":50,"offset":0}}
+                            camp_data = self.post_data(post_camp_data, f"https://stake.com/sports/{sport}")
+                            valores_sql = ""
+                            if camp_data != None and camp_data['data']['slugTournament'] != None and 'fixtureList' in camp_data['data']['slugTournament']:
+                                for event in camp_data['data']['slugTournament']['fixtureList']:
+                                    if 'data' in event and 'eventStatus' in event and 'competitors' in event['data'] and len(event['data']['competitors']) == 2:
+                                        if event['eventStatus']['matchStatus'] == 'Por iniciar':
+                                            status = 1
+                                        else:
+                                            status = 2
+                                        nome_casa = event['data']['competitors'][0]['name']
+                                        nome_visitante = event['data']['competitors'][1]['name']
+                                        eventx = f'{nome_casa} - {nome_visitante}'
+                                        start_timex = datetime.strptime(event['data']['startTime'], "%a, %d %b %Y %H:%M:%S GMT")
+                                        start_time = start_timex.strftime('%Y-%m-%d %H:%M:%S')
+                                        insert_event(self, start_time, eventx, event['slug'], event['id'], status, sport, pais["slug"], camp["slug"], add_ind=self.add_ind)
+                                        insert_compet(self, sport, event['id'], event['data']['competitors'][0]['extId'], event['data']['competitors'][0]['name'], 1, add_ind=self.add_ind)
+                                        insert_compet(self, sport, event['id'], event['data']['competitors'][1]['extId'], event['data']['competitors'][1]['name'], 2, add_ind=self.add_ind)
+                                        if 'groups' in event:
+                                            for groups in event['groups']:
+                                                if 'templates' in groups:
+                                                    for templates in groups['templates']:
+                                                        fillname = False
 
-    def post_data(self, datapost, headers):
+                                                        marketx = templates['name']
+
+                                                        if '{$competitor1}' in marketx or '{$competitor2}' in marketx:
+                                                            fillname = True
+                                                            marketx = marketx.replace('{$competitor1}', "|Casa|")
+                                                            marketx = marketx.replace('{$competitor2}', "|Visitante|")
+
+                                                        if 'markets' in templates:
+                                                            for market in templates['markets']:
+                                                                if not fillname:
+                                                                    marketx = market['name']
+                                                                if not (sport, market['id']) in self.mercados:
+                                                                    if market['status'] == 'active':
+                                                                        status = 1
+                                                                    else:
+                                                                        status = 0
+                                                                    insert_mercado(self, sport, market['id'], marketx,
+                                                                                   templates['name'],
+                                                                                   status, 1,
+                                                                                   add_ind=self.add_ind)
+
+                                                                if 'outcomes' in market and self.mercados[(sport, market['id'])]['ativo'] == 1:
+                                                                    for selecao in market['outcomes']:
+                                                                        selecaox = selecao['name']
+                                                                        if nome_casa in selecaox:
+                                                                            selecaox = selecaox.replace(nome_casa, "|Casa|")
+                                                                        if nome_visitante in selecaox:
+                                                                            selecaox = selecaox.replace(nome_visitante, "|Visitante|")
+                                                                        insert_selecao(self, sport, market['id'], selecaox, add_ind=self.add_ind)
+                                                                        if valores_sql != "": valores_sql += ", "
+                                                                        valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["id"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["name"]}", "{selecao["odds"]}", "{selecao["id"]}")'
+
+                                    else:
+                                        xxx = 0
+                                if valores_sql != "":
+                                    sqlxx = f'INSERT INTO sit_events_odds (id_sit_evento, id_sit_selecao, selecao_nome2, odd, site_id_selecao) ' \
+                                            f'VALUES {valores_sql} ON DUPLICATE KEY ' \
+                                            f'UPDATE odd=VALUES(odd);'
+                                    id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
+
+                                time.sleep(5)
+                                xxx = 0
+
+
+    def post_data(self, datapost, referrer):
         try:
-            testepost = self.context.request
-            response = testepost.post("/_api/graphql", data=datapost, timeout=0, headers=headers).text()
+            cookies = self.page.context.cookies()
+            string_cookies = ""
+            for c in cookies:
+                if 'stake.com' in c['domain']:
+                    string_cookies += f"{c['name']}={c['value']};"
+            req = urllib.request.Request("https://sportsbet.io/_api/graphql")
+            req.set_proxy('localhost:12960', 'http')
+            jsondataasbytes = json.dumps(datapost).encode('utf-8')
+            req.add_header('Host', 'stake.com')
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0')
+            req.add_header('Accept', '*/*')
+            req.add_header('Accept-Language', 'pt-BR')
+            req.add_header('Accept-Encoding', 'gzip, deflate, br')
+            req.add_header('Referer', referrer)
+            req.add_header('cf-device-type', '')
+            req.add_header('x-forwarded-for', '187.19.130.235, 172.70.193.134, 172.20.227.78')
+            req.add_header('x-geoip-country', 'BR')
+            req.add_header('x-geoip-state', 'BR-PB')
+            req.add_header('content-type', 'application/json')
+            req.add_header('x-language', 'br')
+            req.add_header('Content-Length', len(jsondataasbytes))
+            req.add_header('Origin', 'https://stake.com')
+            req.add_header('Connection', 'keep-alive')
+            req.add_header('Cookie', string_cookies)
+            req.add_header('Sec-Fetch-Dest', 'empty')
+            req.add_header('Sec-Fetch-Mode', 'cors')
+            req.add_header('Sec-Fetch-Site', 'same-origin')
+            with urllib.request.urlopen(req, jsondataasbytes) as f:
+                res = f.read()
+            response = res.decode()
             json_s = json.loads(response)
             return json_s
         except Exception as e:

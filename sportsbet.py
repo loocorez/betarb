@@ -68,9 +68,12 @@ class c_sportsbet:
                                     if compet['type'] == 'home':
                                         tipo = 1
                                         nome_casa = compet['name']
+
                                     elif compet['type'] == 'away':
                                         tipo = 2
                                         nome_visitante = compet['name']
+                                    elif compet['type'] == 'h2h':
+                                        tipo = 3
                                     else:
                                         tipo = 0
                                     insert_compet(self, sport, event['id'], compet['id'], compet['name'], tipo,add_ind=self.add_ind)
@@ -78,19 +81,28 @@ class c_sportsbet:
                                 for market in event['mainMarkets']:
                                     if market['name'] == "Handicap Asiático 0-0":
                                         xxx = 0
-
+                                    marketx = market['englishName']
+                                    if nome_casa in marketx:
+                                        marketx = marketx.replace(nome_casa, "|Casa|")
+                                    if nome_visitante in marketx:
+                                        marketx = marketx.replace(nome_visitante, "|Visitante|")
+                                    if marketx == "First Player To Score":
+                                        xxx = 0
                                     if not (sport, market['market_type']['id']) in self.mercados:
-                                        insert_mercado(self, sport, market['market_type']['id'], market['name'], market['englishName'],
-                                                       market['market_type']['translation_key'], market['status'], market['market_type']['type'], add_ind=self.add_ind)
-                                    if 'selections' in market:
+                                        insert_mercado(self, sport, market['market_type']['id'], marketx, market['market_type']['translation_key'], market['status'], market['market_type']['type'], add_ind=self.add_ind)
+
+                                    if 'selections' in market and self.mercados[(sport, market['market_type']['id'])]['ativo'] == 1:
                                         for selecao in market['selections']:
-                                            selecaox = selecao['name'].replace(nome_casa, "Casa")
-                                            selecaox = selecao['name'].replace(nome_visitante, "Visitante")
-                                            #insert_selecao(self, sport, market['market_type']['id'], selecaox, selecao['enName'], add_ind=self.add_ind)
+                                            selecaox = selecao['enName']
+                                            if nome_casa in selecaox:
+                                                selecaox = selecaox.replace(nome_casa, "|Casa|")
+                                            if nome_visitante in selecaox:
+                                                selecaox = selecaox.replace(nome_visitante, "|Visitante|")
+                                            insert_selecao(self, sport, market['market_type']['id'], selecaox, add_ind=self.add_ind)
                                             if valores_sql != "": valores_sql+= ", "
-                                            valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["market_type"]["id"])]["selecoes"][selecao["name"]]["id_bd"]}, "{selecao["odds"]}", "{selecao["id"]}")'
+                                            valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["market_type"]["id"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["enName"]}", "{selecao["odds"]}", "{selecao["id"]}")'
                     if valores_sql != "":
-                        sqlxx = f'INSERT INTO sit_events_odds (id_sit_evento, id_sit_selecao, odd, site_id_selecao) ' \
+                        sqlxx = f'INSERT INTO sit_events_odds (id_sit_evento, id_sit_selecao, selecao_nome2, odd, site_id_selecao) ' \
                                 f'VALUES {valores_sql} ON DUPLICATE KEY ' \
                                 f'UPDATE odd=VALUES(odd);'
                         id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
