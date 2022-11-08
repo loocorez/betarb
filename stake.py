@@ -67,31 +67,34 @@ class c_stake:
                                                             fillname = True
                                                             marketx = marketx.replace('{$competitor1}', "|Casa|")
                                                             marketx = marketx.replace('{$competitor2}', "|Visitante|")
+                                                        if '{!goalnr} gol' == marketx:
+                                                            fillname = True
+                                                            marketx = 'Próximos gols'#marketx.replace('{$competitor1}', "|Casa|")
 
                                                         if 'markets' in templates:
                                                             for market in templates['markets']:
                                                                 if not fillname:
                                                                     marketx = market['name']
-                                                                if not (sport, market['id']) in self.mercados:
+                                                                if not (sport, templates['extId']) in self.mercados:
                                                                     if market['status'] == 'active':
                                                                         status = 1
                                                                     else:
                                                                         status = 0
-                                                                    insert_mercado(self, sport, market['id'], marketx,
+                                                                    insert_mercado(self, sport, templates["extId"], marketx,
                                                                                    templates['name'],
                                                                                    status, 1,
                                                                                    add_ind=self.add_ind)
 
-                                                                if 'outcomes' in market and self.mercados[(sport, market['id'])]['ativo'] == 1:
+                                                                if 'outcomes' in market and self.mercados[(sport, templates["extId"])]['ativo'] == 1:
                                                                     for selecao in market['outcomes']:
                                                                         selecaox = selecao['name']
                                                                         if nome_casa in selecaox:
                                                                             selecaox = selecaox.replace(nome_casa, "|Casa|")
                                                                         if nome_visitante in selecaox:
                                                                             selecaox = selecaox.replace(nome_visitante, "|Visitante|")
-                                                                        insert_selecao(self, sport, market['id'], selecaox, add_ind=self.add_ind)
+                                                                        insert_selecao(self, sport, templates["extId"], selecaox, add_ind=self.add_ind)
                                                                         if valores_sql != "": valores_sql += ", "
-                                                                        valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["id"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["name"]}", "{selecao["odds"]}", "{selecao["id"]}")'
+                                                                        valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, templates["extId"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["name"]}", "{selecao["odds"]}", "{selecao["id"]}")'
 
                                     else:
                                         xxx = 0
@@ -101,7 +104,7 @@ class c_stake:
                                             f'UPDATE odd=VALUES(odd);'
                                     id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
 
-                                time.sleep(5)
+                                time.sleep(10)
                                 xxx = 0
 
 

@@ -116,10 +116,10 @@ def insert_event(self, start_time, event_name, site_slug, site_id, site_status, 
                 id_bd = t_id_bd[0][0]
         id_ind_events = 0
         if add_ind:
-            sqlxx = f'INSERT IGNORE INTO ind_events (id_ind_site, id_sit_events) VALUES ({self.id_site}, {id_bd});'
+            sqlxx = f'INSERT IGNORE INTO ind_events (nome, data, id_ind_sport, id_ind_pais, id_ind_camp) VALUES ("{event_name}","{start_time}", {sports["id_ind"]},{paises["id_ind"]},{camps["id_ind"]});'
             id_ind_events = self.mysql_conn.bd(sqlxx, fetch=False)
             if id_ind_events == 0:
-                t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE id_ind_site = {self.id_site} and id_sit_events="{id_bd}"', fetch=True)
+                t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE nome = "{event_name}" and id_ind_sport={sports["id_ind"]} and id_ind_pais = {paises["id_ind"]} and id_ind_camp = {camps["id_ind"]}', fetch=True)
                 if t_id_ind_events:
                     id_ind_events = t_id_ind_events[0][0]
             sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
