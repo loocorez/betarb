@@ -8,6 +8,7 @@ class c_stake:
     def __init__(self, conexao):
         self.sessao = requests.session()
         self.id_site = 4
+        self.site_name = "STAKE.COM"
         self.mysql_conn = conexao
         #self.cookies = '__cfwaitingroom=Chh4SUdKOEIvL3A2dEpuUGZLWWpxU2RBPT0SkAJJQlBhbEJIUEFzMjNDZlVKZlQ5czZJd2tvVlM3Wk85bEpNbDloS2VPSnNkQXBKa2Fkd2Vud0Z0NTAyandtWHZlVXl1Z1Y1ODF2SXRPRW9Sd0Q2UXU5Wk9hMEVnNXZpU3dtSWJIMHBRcWgrb0NMN08xRXlVMzBRcmVlMlVMV0Fnb0YwSmNBS2l4TVpZK2d0OVRYTTg2QXI5MGtud1lEejJJR2hOa3NHN29PbFJuK1NxckZHak1kQmNvc1JRZ3FoZzZOTThySGllZElWQ2RkWHRJaUh3Y2YvOTF1R3l2TkdoNitOL1dkRVNNei9BNVAyUmF3UWtnMFJmK3dMR3ZuK3J6dmtOSURmblNIQWc0emtKNA%3D%3D; _ga_SEKFV66B0S=GS1.1.1666120922.5.0.1666120922.60.0.0; _wingify_pc_uuid=fdfe2b79ad6745aea34c916a0ed6593c; __tid=uid-8271807831.2962218641; _sp_srt_id.b17c=9d06db3f-4e9a-4a76-a92c-c62010ebc888.1665845234.5.1666118246.1666115462.6cd15c9f-79ea-4ace-b908-954a36708154; _ga=GA1.2.1290975728.1665845236; tryMetamaskHide=true; fs_uid=#BN5B8#4935986190192640:4955098419007488:::#/1697381259; fs_cid=1.0; adformfrpid=5312976836832772683; wingify_donot_track_actions=0; g_state={"i_p":1666721925579,"i_l":3}; experiments=%7B%22arLUC_zhRlKw0HignXgxRA%22%3A3%7D; _gid=GA1.2.1016127202.1666115464; userPreferenceId=U3BvcnRzYmV0UHJlZmVyZW5jZXNVc2VyUHJlZmVyZW5jZTo2MzRhYzRhNmMwNzcyMjQ4NGIxNzZhNWI=; __cf_bm=wA2ut61F1buOGqB6yH6n2RYBpR.d2E3lwhWA0bMudt8-1666120924-0-Adz1Qtsa2YQlbKzZ9U8jOCApkeh5TdgvEiZnB+qrby1PykOxoSc0AgSbeOUljC0ebquimOUToTCiuBtjtPDDDPY='
         #self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0'
@@ -27,6 +28,7 @@ class c_stake:
         self.get_data()
     def get_data(self):
         for sport in self.sports:
+            print(f'{self.site_name} - Capturando dados esporte: {self.sports[sport]["name"]}...')
             post_sport_data = {"query":"query TournamentTableList($sport: String!) {\n  slugSport(sport: $sport) {\n    id\n    name\n    slug\n    categoryList(limit: 100, type: active) {\n      id\n      name\n      slug\n      fixtureCount(type: active)\n      tournamentList(limit: 50, type: active) {\n        id\n        name\n        slug\n        fixtureCount(type: active)\n      }\n    }\n  }\n}\n","variables":{"sport": sport}}
             sport_data = self.post_data(post_sport_data, f"https://stake.com/sports/{sport}")
             if sport_data != None and 'data' in sport_data and 'slugSport' in sport_data['data'] and 'categoryList' in sport_data['data']['slugSport']:
@@ -53,6 +55,7 @@ class c_stake:
                                         start_timex = datetime.strptime(event['data']['startTime'], "%a, %d %b %Y %H:%M:%S GMT")
                                         start_time = start_timex.strftime('%Y-%m-%d %H:%M:%S')
                                         insert_event(self, start_time, eventx, event['slug'], event['id'], status, sport, pais["slug"], camp["slug"], add_ind=self.add_ind)
+
                                         insert_compet(self, sport, event['id'], event['data']['competitors'][0]['extId'], event['data']['competitors'][0]['name'], 1, add_ind=self.add_ind)
                                         insert_compet(self, sport, event['id'], event['data']['competitors'][1]['extId'], event['data']['competitors'][1]['name'], 2, add_ind=self.add_ind)
                                         if 'groups' in event:
@@ -106,6 +109,8 @@ class c_stake:
 
                                 time.sleep(10)
                                 xxx = 0
+            else:
+                xxx = 0
 
 
     def post_data(self, datapost, referrer):

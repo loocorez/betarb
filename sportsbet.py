@@ -48,7 +48,6 @@ class c_sportsbet:
                 retorno = self.post_data(datapost)
                 with open(f"./jsons/{sport}.json", "w") as outfile:
                     json.dump(retorno, outfile)
-                continue
             if retorno != None and 'data' in retorno and 'sportsbetNewGraphql' in retorno['data'] and 'getSportBySlug' in retorno['data']['sportsbetNewGraphql'] and 'leagues' in retorno['data']['sportsbetNewGraphql']['getSportBySlug']:
                 for pais in retorno['data']['sportsbetNewGraphql']['getSportBySlug']['leagues']:
                     paisx = "" if pais["name"] == None else pais["name"].strip()
@@ -76,7 +75,9 @@ class c_sportsbet:
                                         tipo = 3
                                     else:
                                         tipo = 0
-                                    insert_compet(self, sport, event['id'], compet['id'], compet['name'], tipo,add_ind=self.add_ind)
+                                    insert_compet(self, sport, event['id'], compet['id'], compet['name'], tipo, add_ind=self.add_ind)
+
+
                             if 'mainMarkets' in event:
                                 for market in event['mainMarkets']:
                                     if market['name'] == "Handicap Asiático 0-0":

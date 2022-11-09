@@ -116,10 +116,10 @@ def insert_event(self, start_time, event_name, site_slug, site_id, site_status, 
                 id_bd = t_id_bd[0][0]
         id_ind_events = 0
         if add_ind:
-            sqlxx = f'INSERT IGNORE INTO ind_events (nome, data, id_ind_sport, id_ind_pais, id_ind_camp) VALUES ("{event_name}","{start_time}", {sports["id_ind"]},{paises["id_ind"]},{camps["id_ind"]});'
+            sqlxx = f'INSERT IGNORE INTO ind_events (nome, start_time, id_ind_camp) VALUES ("{event_name}","{start_time}", {camps["id_ind"]});'
             id_ind_events = self.mysql_conn.bd(sqlxx, fetch=False)
             if id_ind_events == 0:
-                t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE nome = "{event_name}" and id_ind_sport={sports["id_ind"]} and id_ind_pais = {paises["id_ind"]} and id_ind_camp = {camps["id_ind"]}', fetch=True)
+                t_id_ind_events = self.mysql_conn.bd(f'SELECT id FROM ind_events WHERE nome = "{event_name}" and id_ind_camp = {camps["id_ind"]}', fetch=True)
                 if t_id_ind_events:
                     id_ind_events = t_id_ind_events[0][0]
             sqlxx = f'UPDATE sit_events SET id_ind_events={id_ind_events} WHERE id={id_bd};'
@@ -142,7 +142,7 @@ def insert_compet(self, sport, evento, site_id_compet, site_nome_compet, sit_tip
             t_id_bd = self.mysql_conn.bd(f'SELECT id FROM sit_compet WHERE id_ind_site = {self.id_site} and site_id_compet="{site_id_compet}"', fetch=True)
             if t_id_bd: id_bd = t_id_bd[0][0]
         sqlxx = f'INSERT IGNORE INTO sit_events_compet (id_sit_event, id_sit_compet, tipo) VALUES ({eventos["id_bd"]}, {id_bd}, {sit_tipo_compet});'
-        id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
+        self.mysql_conn.bd(sqlxx, fetch=False)
         id_ind_compet = 0
         if add_ind and not checknan(sports['id_ind']) and sports['id_ind'] > 0: #
             sqlxx = f'INSERT IGNORE INTO ind_compet (id_ind_sport, nome) VALUES ({sports["id_ind"]}, "{site_nome_compet}");'
@@ -150,6 +150,8 @@ def insert_compet(self, sport, evento, site_id_compet, site_nome_compet, sit_tip
             if id_ind_compet == 0:
                 t_id_ind_compet = self.mysql_conn.bd(f'SELECT id FROM ind_compet WHERE id_ind_sport = {sports["id_ind"]} and nome="{site_nome_compet}"', fetch=True)
                 if t_id_ind_compet: id_ind_compet = t_id_ind_compet[0][0]
+            sqlxx = f'INSERT IGNORE INTO ind_events_compet (id_ind_event, id_ind_compet, tipo) VALUES ({eventos["id_ind"]}, {id_ind_compet}, {sit_tipo_compet});'
+            self.mysql_conn.bd(sqlxx, fetch=False)
             sqlxx = f'UPDATE sit_compet SET id_ind_compet={id_ind_compet} WHERE id={id_bd};'
             self.mysql_conn.bd(sqlxx, fetch=False)
         self.competidores[(sport, site_id_compet)] = {'name': site_nome_compet, 'id_bd': id_bd, 'id_site': site_id_compet, 'id_ind': id_ind_compet}
