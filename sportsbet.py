@@ -50,15 +50,15 @@ class c_sportsbet:
                     json.dump(retorno, outfile)
             if retorno != None and 'data' in retorno and 'sportsbetNewGraphql' in retorno['data'] and 'getSportBySlug' in retorno['data']['sportsbetNewGraphql'] and 'leagues' in retorno['data']['sportsbetNewGraphql']['getSportBySlug']:
                 for pais in retorno['data']['sportsbetNewGraphql']['getSportBySlug']['leagues']:
-                    paisx = "" if pais["name"] == None else pais["name"].strip()
+                    paisx = "" if pais["name"] == None else n_str(pais["name"].strip())
                     insert_pais(self, paisx, pais["slug"], pais["id"], add_ind=self.add_ind)
                     valores_sql = ""
                     for camp in pais['tournaments']:
-                        campx = "" if camp['name'] == None else camp['name'].strip()
+                        campx = "" if camp['name'] == None else n_str(camp['name'].strip())
                         insert_camp(self, campx, camp['slug'], camp['id'], sport, pais["slug"], add_ind=self.add_ind)
                         for event in camp['events']:
                             start_time = datetime.fromtimestamp(event['start_time'])
-                            eventx = "" if event['name'] == None else event['name'].strip()
+                            eventx = "" if event['name'] == None else n_str(event['name'].strip())
                             insert_event(self, start_time, eventx,  event['slug'], event['id'], event['status'], sport, pais["slug"], camp["slug"], add_ind=self.add_ind)
                             nome_casa = ""
                             nome_visitante = ""
@@ -75,7 +75,7 @@ class c_sportsbet:
                                         tipo = 3
                                     else:
                                         tipo = 0
-                                    insert_compet(self, sport, event['id'], compet['id'], compet['name'], tipo, add_ind=self.add_ind)
+                                    insert_compet(self, sport, event['id'], compet['id'], n_str(compet['name']), tipo, add_ind=self.add_ind)
 
 
                             if 'mainMarkets' in event:
@@ -90,18 +90,18 @@ class c_sportsbet:
                                     if marketx == "First Player To Score":
                                         xxx = 0
                                     if not (sport, market['market_type']['id']) in self.mercados:
-                                        insert_mercado(self, sport, market['market_type']['id'], marketx, market['market_type']['translation_key'], market['status'], market['market_type']['type'], add_ind=self.add_ind)
+                                        insert_mercado(self, sport, market['market_type']['id'], n_str(marketx), market['market_type']['translation_key'], market['status'], market['market_type']['type'], add_ind=self.add_ind)
 
                                     if 'selections' in market and self.mercados[(sport, market['market_type']['id'])]['ativo'] == 1:
                                         for selecao in market['selections']:
-                                            selecaox = selecao['enName']
+                                            selecaox = n_str(selecao['enName'])
                                             if nome_casa in selecaox:
                                                 selecaox = selecaox.replace(nome_casa, "|Casa|")
                                             if nome_visitante in selecaox:
                                                 selecaox = selecaox.replace(nome_visitante, "|Visitante|")
                                             insert_selecao(self, sport, market['market_type']['id'], selecaox, add_ind=self.add_ind)
                                             if valores_sql != "": valores_sql+= ", "
-                                            valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["market_type"]["id"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["enName"]}", "{selecao["odds"]}", "{selecao["id"]}")'
+                                            valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["market_type"]["id"])]["selecoes"][selecaox]["id_bd"]}, "{n_str(selecao["enName"])}", "{selecao["odds"]}", "{selecao["id"]}")'
                     if valores_sql != "":
                         sqlxx = f'INSERT INTO sit_events_odds (id_sit_evento, id_sit_selecao, selecao_nome2, odd, site_id_selecao) ' \
                                 f'VALUES {valores_sql} ON DUPLICATE KEY ' \
@@ -212,11 +212,9 @@ class c_sportsbet:
                 data_json = json.loads(codecs.decode(substring, 'unicode_escape'))
                 print(f'{self.site_name} - Capturando indice de esportes...')
                 for t in data_json:
-                    if '__typename' in data_json[t] and data_json[t][
-                        '__typename'] == 'SportsbetNewGraphqlSportCategory':
-                        nome = data_json[t]['name({"language":"pt"})'].strip()
-                        insert_sports(self, nome.encode("latin-1").decode("utf-8"), data_json[t]['slug'],
-                                      data_json[t]['id'], add_ind=self.add_ind)
+                    if '__typename' in data_json[t] and data_json[t]['__typename'] == 'SportsbetNewGraphqlSportCategory':
+                        nome = n_str(data_json[t]['name({"language":"pt"})'].strip())
+                        insert_sports(self, nome.encode("latin-1").decode("utf-8"), data_json[t]['slug'], data_json[t]['id'], add_ind=self.add_ind)
     #
     # def get_dados(self):
     #     self.get_all_sports()

@@ -24,6 +24,11 @@ def checknan(valor):
             vazio = True
     finally:
         return vazio
+
+def n_str(n_string):
+    n_string.replace("'","''")
+    n_string.replace('"', '""')
+    return n_string
 def insert_sports(self, nomex, slug, id, add_ind=False):
     if not slug in self.sports:
         if add_ind: self.mysql_conn.bd(f'INSERT IGNORE INTO ind_sports (sport_name, slug) VALUES ("{nomex}", "{slug}");', fetch=False)

@@ -33,11 +33,11 @@ class c_stake:
             sport_data = self.post_data(post_sport_data, f"https://stake.com/sports/{sport}")
             if sport_data != None and 'data' in sport_data and 'slugSport' in sport_data['data'] and 'categoryList' in sport_data['data']['slugSport']:
                 for pais in sport_data['data']['slugSport']['categoryList']:
-                    paisx = "" if pais["name"] == None else pais["name"].strip()
+                    paisx = "" if pais["name"] == None else n_str(pais["name"].strip())
                     insert_pais(self, paisx, pais["slug"], pais["id"], add_ind=self.add_ind)
                     if 'tournamentList' in pais:
                         for camp in pais['tournamentList']:
-                            campx = "" if camp['name'] == None else camp['name'].strip()
+                            campx = "" if camp['name'] == None else n_str(camp['name'].strip())
                             insert_camp(self, campx, camp['slug'], camp['id'], sport, pais["slug"], add_ind=self.add_ind)
                             post_camp_data = {"query":"query SlugTournament($sport: String!, $category: String!, $tournament: String!, $type: SportSearchEnum!, $groups: [String!]!, $limit: Int = 50, $offset: Int = 0) {\n  slugTournament(sport: $sport, category: $category, tournament: $tournament) {\n    id\n    name\n    fixtureCount(type: $type)\n    fixtureList(type: $type, limit: $limit, offset: $offset) {\n      ...FixturePreview\n      groups(groups: $groups, status: [active, suspended, deactivated]) {\n        ...SportGroupTemplates\n      }\n    }\n  }\n}\n\nfragment FixturePreview on SportFixture {\n  id\n  ...SportFixtureLiveStreamExists\n  status\n  slug\n  marketCount(status: [active, suspended])\n  extId\n  data {\n    __typename\n    ...SportFixtureDataMatch\n    ...SportFixtureDataOutright\n  }\n  tournament {\n    ...TournamentTreeNested\n  }\n  eventStatus {\n    ...SportFixtureEventStatus\n  }\n}\n\nfragment SportFixtureLiveStreamExists on SportFixture {\n  id\n  betradarStream {\n    exists\n  }\n  imgArenaStream {\n    exists\n  }\n  abiosStream {\n    exists\n    stream {\n      startTime\n      id\n    }\n  }\n  geniussportsStream(deliveryType: hls) {\n    exists\n  }\n}\n\nfragment SportFixtureDataMatch on SportFixtureDataMatch {\n  startTime\n  competitors {\n    ...SportFixtureCompetitor\n  }\n  __typename\n}\n\nfragment SportFixtureCompetitor on SportFixtureCompetitor {\n  name\n  extId\n  countryCode\n  abbreviation\n}\n\nfragment SportFixtureDataOutright on SportFixtureDataOutright {\n  name\n  startTime\n  endTime\n  __typename\n}\n\nfragment TournamentTreeNested on SportTournament {\n  id\n  name\n  slug\n  category {\n    ...CategoryTreeNested\n  }\n}\n\nfragment CategoryTreeNested on SportCategory {\n  id\n  name\n  slug\n  sport {\n    id\n    name\n    slug\n  }\n}\n\nfragment SportFixtureEventStatus on SportFixtureEventStatus {\n  homeScore\n  awayScore\n  matchStatus\n  clock {\n    matchTime\n    remainingTime\n  }\n  periodScores {\n    homeScore\n    awayScore\n    matchStatus\n  }\n  currentServer {\n    extId\n  }\n  homeGameScore\n  awayGameScore\n  statistic {\n    yellowCards {\n      away\n      home\n    }\n    redCards {\n      away\n      home\n    }\n    corners {\n      home\n      away\n    }\n  }\n}\n\nfragment SportGroupTemplates on SportGroup {\n  ...SportGroup\n  templates(limit: 50, includeEmpty: true) {\n    ...SportGroupTemplate\n    markets(limit: 1) {\n      ...SportMarket\n      outcomes {\n        ...SportMarketOutcome\n      }\n    }\n  }\n}\n\nfragment SportGroup on SportGroup {\n  name\n  translation\n  rank\n}\n\nfragment SportGroupTemplate on SportGroupTemplate {\n  extId\n  rank\n  name\n}\n\nfragment SportMarket on SportMarket {\n  id\n  name\n  status\n  extId\n  specifiers\n  customBetAvailable\n}\n\nfragment SportMarketOutcome on SportMarketOutcome {\n  active\n  id\n  odds\n  name\n  customBetAvailable\n}\n","variables":{"type":"popular","tournament": camp['slug'],"category":pais['slug'],"sport":"soccer","groups":["main", "goals", "1st2ndhalfmarkets", "AsianLines"],"limit":50,"offset":0}}
                             camp_data = self.post_data(post_camp_data, f"https://stake.com/sports/{sport}")
@@ -51,20 +51,20 @@ class c_stake:
                                             status = 2
                                         nome_casa = event['data']['competitors'][0]['name']
                                         nome_visitante = event['data']['competitors'][1]['name']
-                                        eventx = f'{nome_casa} - {nome_visitante}'
+                                        eventx = n_str(f'{nome_casa} - {nome_visitante}')
                                         start_timex = datetime.strptime(event['data']['startTime'], "%a, %d %b %Y %H:%M:%S GMT")
                                         start_time = start_timex.strftime('%Y-%m-%d %H:%M:%S')
                                         insert_event(self, start_time, eventx, event['slug'], event['id'], status, sport, pais["slug"], camp["slug"], add_ind=self.add_ind)
 
-                                        insert_compet(self, sport, event['id'], event['data']['competitors'][0]['extId'], event['data']['competitors'][0]['name'], 1, add_ind=self.add_ind)
-                                        insert_compet(self, sport, event['id'], event['data']['competitors'][1]['extId'], event['data']['competitors'][1]['name'], 2, add_ind=self.add_ind)
+                                        insert_compet(self, sport, event['id'], event['data']['competitors'][0]['extId'], n_str(event['data']['competitors'][0]['name']), 1, add_ind=self.add_ind)
+                                        insert_compet(self, sport, event['id'], event['data']['competitors'][1]['extId'], n_str(event['data']['competitors'][1]['name']), 2, add_ind=self.add_ind)
                                         if 'groups' in event:
                                             for groups in event['groups']:
                                                 if 'templates' in groups:
                                                     for templates in groups['templates']:
                                                         fillname = False
 
-                                                        marketx = templates['name']
+                                                        marketx = n_str(templates['name'])
 
                                                         if '{$competitor1}' in marketx or '{$competitor2}' in marketx:
                                                             fillname = True
@@ -90,14 +90,14 @@ class c_stake:
 
                                                                 if 'outcomes' in market and self.mercados[(sport, templates["extId"])]['ativo'] == 1:
                                                                     for selecao in market['outcomes']:
-                                                                        selecaox = selecao['name']
+                                                                        selecaox = n_str(selecao['name'])
                                                                         if nome_casa in selecaox:
                                                                             selecaox = selecaox.replace(nome_casa, "|Casa|")
                                                                         if nome_visitante in selecaox:
                                                                             selecaox = selecaox.replace(nome_visitante, "|Visitante|")
                                                                         insert_selecao(self, sport, templates["extId"], selecaox, add_ind=self.add_ind)
                                                                         if valores_sql != "": valores_sql += ", "
-                                                                        valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, templates["extId"])]["selecoes"][selecaox]["id_bd"]}, "{selecao["name"]}", "{selecao["odds"]}", "{selecao["id"]}")'
+                                                                        valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, templates["extId"])]["selecoes"][selecaox]["id_bd"]}, "{n_str(selecao["name"])}", "{selecao["odds"]}", "{selecao["id"]}")'
 
                                     else:
                                         xxx = 0

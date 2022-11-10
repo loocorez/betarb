@@ -42,8 +42,8 @@ def betpix365():
             v_betpix365.all_campeonatos = json.load(json_file)
 t = Thread(target=sportsbet, )
 t.start()
-# t = Thread(target=stake, )
-# t.start()
+t1 = Thread(target=stake, )
+t1.start()
 t.join()
 
 
