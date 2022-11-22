@@ -54,6 +54,8 @@ def insert_sports(self, nomex, slug, id, add_ind=False):
         self.sports[slug] = {'name': nomex, 'slug': slug, 'id_bd': id_bd, 'id_site': id, 'id_ind': id_ind, 'ativo': ativo}
 
 def insert_pais(self, nomex, slug, id, add_ind=False):
+    if nomex == 'Eslováquia':
+        print('')
     if not slug in self.paises:
         if add_ind: self.mysql_conn.bd(f'INSERT IGNORE INTO ind_paises (pais_name) VALUES ("{nomex}");', fetch=False)
         sqlgg = f'SELECT id from ind_paises WHERE pais_name="{nomex}";'
@@ -65,7 +67,7 @@ def insert_pais(self, nomex, slug, id, add_ind=False):
         id_bd = self.mysql_conn.bd(sqlxx, fetch=False)
         id_ind = 0
         if id_bd == 0:
-            t_id_bd = self.mysql_conn.bd(f'SELECT id, id_ind_pais FROM sit_paises WHERE id_site = {self.id_site} and id_site_pais="{id}"', fetch=True)
+            t_id_bd = self.mysql_conn.bd(f'SELECT id, id_ind_pais FROM sit_paises WHERE id_site = {self.id_site} and site_pais_name="{nomex}" and slug="{slug}"', fetch=True)
             if t_id_bd:
                 id_bd = t_id_bd[0][0]
                 id_ind = t_id_bd[0][1]
@@ -73,6 +75,8 @@ def insert_pais(self, nomex, slug, id, add_ind=False):
             t_id_ind = self.mysql_conn.bd(f'SELECT id_ind_pais FROM sit_paises WHERE id = {id_bd}', fetch=True)
             if t_id_ind:
                 id_ind = t_id_ind[0][0]
+        if id_bd == 0:
+            print("")
         self.paises[slug] = {'name': nomex, 'id_bd': id_bd, 'id_site': id, 'id_ind': id_ind}
 
 def insert_camp(self, nomex, slug, id, sport, pais, add_ind=False):
