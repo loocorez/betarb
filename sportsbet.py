@@ -82,7 +82,7 @@ class c_sportsbet:
                                 for market in event['mainMarkets']:
                                     if market['name'] == "Handicap Asiático 0-0":
                                         xxx = 0
-                                    marketx = market['englishName']
+                                    marketx = market['name']
                                     if nome_casa in marketx:
                                         marketx = marketx.replace(nome_casa, "|Casa|")
                                     if nome_visitante in marketx:
@@ -94,7 +94,7 @@ class c_sportsbet:
 
                                     if 'selections' in market and self.mercados[(sport, market['market_type']['id'])]['ativo'] == 1:
                                         for selecao in market['selections']:
-                                            selecaox = n_str(selecao['enName'])
+                                            selecaox = n_str(selecao['name'])
                                             if nome_casa in selecaox:
                                                 selecaox = selecaox.replace(nome_casa, "|Casa|")
                                             if nome_visitante in selecaox:
