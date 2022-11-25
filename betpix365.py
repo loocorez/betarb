@@ -10,6 +10,8 @@ class c_betpix365:
         self.sports = {}
         self.paises = {}
         self.campeonatos = {}
+        self.mysql_conn = conexao
+        self.add_ind = False
         # self.all_campeonatos = {}
     def get_dados(self):
         return(self.get_all_campeonatos())
@@ -40,7 +42,8 @@ class c_betpix365:
         # with ThreadPoolExecutor(30) as executor:
         for esporte in data['data']:
             if not esporte["stSURL"] in self.sports:
-                insert_sports(self, esporte["stN"].strip(), esporte["stSURL"], esporte["xid"], add_ind=True)
+                #insert_sports(self, nome.encode("latin-1").decode("utf-8"), data_json[t]['slug'], data_json[t]['id'], add_ind=self.add_ind)
+                insert_sports(self, esporte["stN"].strip(), esporte["stSURL"], esporte["xid"], add_ind=self.add_ind)
             #     self.conexao.bd(f'INSERT IGNORE INTO ind_sports (sport_name) VALUES ("{esporte["stN"].strip()}");', fetch=False)
             #     sql = f'SELECT id FROM ind_sports WHERE sport_name = "{esporte["stN"].strip()}";'
             #     _sports[esporte["stSURL"]] = self.conexao.bd(sql, fetch=True)[0][0]
@@ -55,7 +58,7 @@ class c_betpix365:
             #                                       'paises': {}}
             for pais in esporte['cs']:
                 if not pais["cSURL"] in self.paises:
-                    insert_pais(self, pais["cN"].strip(), pais["cSURL"], pais["xid"], add_ind=True)
+                    insert_pais(self, pais["cN"].strip(), pais["cSURL"], pais["xid"], add_ind=self.add_ind)
                     # self.conexao.bd(f'INSERT IGNORE INTO ind_paises (pais_name) VALUES ("{pais["cN"].strip()}");', fetch=False)
                     # _paises[pais["cSURL"]] = self.conexao.bd(f'SELECT id FROM ind_paises WHERE pais_name = "{pais["cN"].strip()}";', fetch=True)[0][0]
                     # self.paises[pais["cSURL"]] = {'name': pais['cN'].strip(), 'id': pais["xid"]}
@@ -70,7 +73,7 @@ class c_betpix365:
                         # sql = f'INSERT IGNORE INTO ind_camp (id_ind_sport, id_ind_pais, camp_name) VALUES ({_sports[esporte["stSURL"]]},{_paises[pais["cSURL"]]},"{camp["seaN"].strip()}");'
                         # self.conexao.bd(sql, fetch=False)
                         # _campeonatos[camp["seaSURL"]] = self.conexao.bd(f'SELECT id FROM ind_camp WHERE camp_name = "{camp["seaN"].strip()}" and id_ind_pais = {_paises[pais["cSURL"]]} and id_ind_sport = {_sports[esporte["stSURL"]]};', fetch=True)[0][0]
-                        insert_camp(self, camp["seaN"].strip(), camp["seaSURL"], camp["sId"], self.sports[esporte["stSURL"]], self.paises[pais["cSURL"]], add_ind=True)
+                        insert_camp(self, camp["seaN"].strip(), camp["seaSURL"], camp["sId"], esporte["stSURL"], pais["cSURL"], add_ind=self.add_ind)
                         # self.campeonatos[camp["seaSURL"]] = {'name': camp["seaN"].strip(), 'id': camp["sId"]}
                         # sqlxx = f'INSERT INTO sit_camp (id_site, id_site_camp, site_camp_name, id_ind_camp, slug) VALUES ({self.id_site},"{camp["sId"]}","{camp["seaN"].strip()}",{_campeonatos[camp["seaSURL"]]},"{camp["seaSURL"]}") ON DUPLICATE KEY UPDATE site_camp_name="{camp["seaN"].strip()}", slug="{camp["seaSURL"]}";'
                         # self.conexao.bd(sqlxx, fetch=False)

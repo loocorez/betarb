@@ -78,7 +78,7 @@ class c_sportsbet:
                                     insert_compet(self, sport, event['id'], compet['id'], n_str(compet['name']), tipo, add_ind=self.add_ind)
 
 
-                            if 'mainMarkets' in event:
+                            if 'mainMarkets' in event and event['market_count'] >=3:
                                 for market in event['mainMarkets']:
                                     if market['name'] == "Handicap Asiático 0-0":
                                         xxx = 0
@@ -89,17 +89,28 @@ class c_sportsbet:
                                         marketx = marketx.replace(nome_visitante, "|Visitante|")
                                     if marketx == "First Player To Score":
                                         xxx = 0
+
+                                    if 'dddd' in marketx:
+                                        xxx = 0
                                     if not (sport, market['market_type']['id']) in self.mercados:
                                         insert_mercado(self, sport, market['market_type']['id'], n_str(marketx), market['market_type']['translation_key'], market['status'], market['market_type']['type'], add_ind=self.add_ind)
 
                                     if 'selections' in market and self.mercados[(sport, market['market_type']['id'])]['ativo'] == 1:
                                         for selecao in market['selections']:
                                             selecaox = n_str(selecao['name'])
+                                            selecaox2 = n_str(selecao['enName'])
                                             if nome_casa in selecaox:
                                                 selecaox = selecaox.replace(nome_casa, "|Casa|")
+                                            elif nome_casa in selecaox2:
+                                                selecaox = selecaox2.replace(nome_casa, "|Casa|")
                                             if nome_visitante in selecaox:
                                                 selecaox = selecaox.replace(nome_visitante, "|Visitante|")
+                                            elif nome_visitante in selecaox2:
+                                                selecaox = selecaox2.replace(nome_visitante, "|Casa|")
+                                            if 'Brasil' in selecaox:
+                                                xxxx = 0
                                             insert_selecao(self, sport, market['market_type']['id'], selecaox, add_ind=self.add_ind)
+
                                             if valores_sql != "": valores_sql+= ", "
                                             valores_sql += f'({self.eventos[event["id"]]["id_bd"]}, {self.mercados[(sport, market["market_type"]["id"])]["selecoes"][selecaox]["id_bd"]}, "{n_str(selecao["enName"])}", "{selecao["odds"]}", "{selecao["id"]}")'
                     if valores_sql != "":
